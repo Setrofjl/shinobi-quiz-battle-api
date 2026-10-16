@@ -60,12 +60,18 @@ Base URL: `http://localhost:3001/api/v1`
 
 ## What "completed" means in my game
 
-[One or two sentences: when does a player count as having completed a game? For example: "A player completed the game when they answered every question, even if some answers were wrong or timed out."]
+A player completed the game when they answered every question in the game's question set, even if some answers were incorrect. The player's final score is based on their total Chakra.
 
 ## Tables
 
-[List your tables, one line each, in the order of your migrations.]
-
+- `users` — Stores user accounts, school IDs, names, and roles.
+- `QuestionSets` — Stores quiz sets and their host.
+- `GameSessions` — Stores game sessions and their status.
+- `Players` — Stores players in each game, including their nicknames and Chakra scores.
+- `Questions` — Stores questions belonging to a question set.
+- `Answers` — Stores players' answers to questions.
+- `RewardRounds` — Stores reward rounds for a game.
+- `RewardObjects` — Stores rewards available in each reward round.
 ## Database scripts
 
 | Command | What it does |
