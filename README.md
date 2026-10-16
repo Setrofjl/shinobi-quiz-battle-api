@@ -60,6 +60,8 @@ Base URL: `http://localhost:3001/api/v1`
 
 ## What "completed" means in my game
 
+
+
 A player completed the game when they answered every question in the game's question set, even if some answers were incorrect. The player's final score is based on their total Chakra.
 
 ## Tables
