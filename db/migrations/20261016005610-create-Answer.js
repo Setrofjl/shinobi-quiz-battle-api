@@ -1,16 +1,14 @@
-
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    const answerColumns = {
+  async up (queryInterface, Sequelize) {
+    await queryInterface.createTable('Answer', {
       answerId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         primaryKey: true,
+        allowNull: false,
       },
-
       playerId: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -18,10 +16,9 @@ module.exports = {
           model: 'Player',
           key: 'playerId',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
-
       questionId: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -29,30 +26,25 @@ module.exports = {
           model: 'Question',
           key: 'questionId',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
-
       selectedIndex: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-
       isCorrect: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
       },
-
       submittedAt: {
         type: Sequelize.DATE,
         allowNull: false,
       },
-    };
-
-    await queryInterface.createTable('Answer', answerColumns);
+    });
   },
 
-  async down(queryInterface) {
+  async down (queryInterface, Sequelize) {
     await queryInterface.dropTable('Answer');
-  },
+  }
 };
