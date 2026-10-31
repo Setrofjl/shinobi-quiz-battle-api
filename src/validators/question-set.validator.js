@@ -6,7 +6,7 @@ const idParam = [
   param('id')
     .exists().withMessage('id is required')
     .bail()
-    .isInt({ min: 1 }).withMessage('id must be a positive integer')
+    .isInt({ min: 1, max: 2147483647 }).withMessage('id must be a positive integer')
     .bail()
     .toInt(),
 ];
@@ -30,6 +30,9 @@ const createRules = [
 
 const updateRules = [
   ...idParam,
+  body('title')
+    .if((_, { req }) => req.body?.title === undefined && req.body?.subject === undefined)
+    .exists().withMessage('at least one of title or subject is required'),
   body('title')
     .optional()
     .isString().withMessage('title must be text')

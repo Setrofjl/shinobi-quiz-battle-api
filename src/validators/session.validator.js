@@ -13,13 +13,13 @@ const createRules = [
   body('questionSetId')
     .exists().withMessage('questionSetId is required')
     .bail()
-    .isInt({ min: 1 }).withMessage('questionSetId must be a positive integer')
+    .isInt({ min: 1, max: 2147483647 }).withMessage('questionSetId must be a positive integer')
     .bail()
     .toInt(),
   body('timeLimit')
     .exists().withMessage('timeLimit is required')
     .bail()
-    .isInt({ min: 1 }).withMessage('timeLimit must be a positive integer')
+    .isInt({ min: 1, max: 2147483647 }).withMessage('timeLimit must be a positive integer')
     .bail()
     .toInt(),
 ];
