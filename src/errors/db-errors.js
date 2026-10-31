@@ -3,8 +3,17 @@
 const { UniqueConstraintError, ForeignKeyConstraintError } = require('sequelize');
 
 function constraintOf(error) {
-  if (error instanceof UniqueConstraintError || error instanceof ForeignKeyConstraintError) {
-    return (error.parent && error.parent.constraint) || error.index || 'unknown';
+  const parent = error.parent || error.original;
+  const constraint = (parent && parent.constraint) || error.index;
+  const postgresConstraintViolation =
+    parent && typeof parent.code === 'string' && parent.code.startsWith('23');
+
+  if (
+    error instanceof UniqueConstraintError
+    || error instanceof ForeignKeyConstraintError
+    || postgresConstraintViolation
+  ) {
+    return constraint || 'unknown';
   }
   return null;
 }

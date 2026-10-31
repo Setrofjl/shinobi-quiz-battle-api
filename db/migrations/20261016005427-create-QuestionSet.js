@@ -8,7 +8,6 @@ module.exports = {
       questionSetId: {
         type: Sequelize.INTEGER,
         primaryKey: true,
-        autoIncrement: true,
         allowNull: false,
       },
       hostId: {

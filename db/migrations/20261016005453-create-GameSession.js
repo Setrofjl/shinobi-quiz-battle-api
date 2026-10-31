@@ -17,7 +17,7 @@ module.exports = {
           model: 'users',
           key: 'user_id',
         },
-        onDelete: 'CASCADE',
+        onDelete: 'RESTRICT',
         onUpdate: 'CASCADE',
       },
       questionSetId: {

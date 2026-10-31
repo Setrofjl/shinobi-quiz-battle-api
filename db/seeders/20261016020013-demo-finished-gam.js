@@ -190,6 +190,19 @@ module.exports = {
         chakraChange: -10,
       },
     ]);
+
+    await db.query(`
+      SELECT setval(
+        '"GameSession_sessionId_seq"',
+        GREATEST(COALESCE((SELECT MAX("sessionId") FROM "GameSession"), 1), 1),
+        true
+      );
+      SELECT setval(
+        '"Player_playerId_seq"',
+        GREATEST(COALESCE((SELECT MAX("playerId") FROM "Player"), 1), 1),
+        true
+      );
+    `);
   },
 
   async down(queryInterface) {

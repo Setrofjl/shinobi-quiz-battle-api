@@ -6,6 +6,7 @@ module.exports = (sequelize, DataTypes) => sequelize.define(
     sessionId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement: true,
       allowNull: false,
     },
     hostId: {

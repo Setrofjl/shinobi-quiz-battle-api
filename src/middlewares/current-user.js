@@ -16,7 +16,13 @@ async function currentUser(req, res, next) {
   const user = schoolId ? await userRepository.findBySchoolId(schoolId) : null;
 
   // Only what the rest of the code needs. Never the whole account.
-  req.user = user ? { user_id: user.user_id, school_id: user.school_id, role: user.role } : null;
+  req.user = user
+    ? {
+        user_id: user.user_id,
+        school_id: user.school_id,
+        role: user.role.toUpperCase(),
+      }
+    : null;
   next();
 }
 
