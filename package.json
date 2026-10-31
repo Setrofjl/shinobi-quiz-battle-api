@@ -1,0 +1,36 @@
+{
+  "name": "shinobi-quiz-battle-api",
+  "version": "1.0.0",
+  "description": "Shinobi Quiz Battle Backend service for CS 313.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:create": "sequelize-cli db:create",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:status": "sequelize-cli db:migrate:status",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all",
+    "db:reset": "node scripts/db-wipe.js && sequelize-cli db:migrate && sequelize-cli db:seed:all",
+    "db:check": "node scripts/db-check.js",
+    "check": "node scripts/ci-check.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "author": "Gipanao John Lawrenze Fortes",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^18.0.7",
+    "express": "^5.3.0",
+    "express-validator": "^7.3.2",
+    "morgan": "^1.12.1",
+    "pg": "^8.23.1",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.8"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.6.5"
+  }
+}
