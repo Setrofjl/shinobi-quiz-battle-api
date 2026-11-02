@@ -1,0 +1,839 @@
+{
+  "info": {
+    "_postman_id": "85b66145-28e9-4bf1-9c44-64edfb5a4112",
+    "name": "CS 313 Week 11 - Shinobi Quiz Battle",
+    "description": "Week 11 CRUD, validation, sessions, player joins/rejoins, authorization, conflicts, and Hub results. Requests run in order; the manual capacity request requires a session pre-populated with 30 distinct players.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3001/api/v1" },
+    { "key": "hostSchoolId", "value": "24179712" },
+    { "key": "otherHostSchoolId", "value": "24179713" },
+    { "key": "adminSchoolId", "value": "24179001" },
+    { "key": "playerOneSchoolId", "value": "24179723" },
+    { "key": "playerTwoSchoolId", "value": "24179795" },
+    { "key": "hubKey", "value": "dev-hub-key" },
+    { "key": "setId", "value": "" },
+    { "key": "deleteSetId", "value": "" },
+    { "key": "sessionCode", "value": "" },
+    { "key": "secondSessionCode", "value": "" },
+    { "key": "playerId", "value": "" },
+    { "key": "playerScore", "value": "" },
+    { "key": "capacitySessionCode", "value": "123456" }
+  ],
+  "item": [
+    {
+      "name": "Hub Contract",
+      "item": [
+        {
+          "name": "Health - 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('health answers 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Results - Hub key required",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/results"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('missing Hub key answers 401', function () { pm.response.to.have.status(401); });",
+                  "pm.test('error response is consistent', function () { pm.expect(pm.response.json().error.code).to.eql('HUB_KEY_REQUIRED'); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Question sets",
+      "item": [
+        {
+          "name": "Create question set - ignores client hostId",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Week 11 Shinobi Basics\",\n  \"subject\": \"General Knowledge\",\n  \"hostId\": 999\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/question-sets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('question set created with 201', function () { pm.response.to.have.status(201); });",
+                  "const created = pm.response.json();",
+                  "pm.expect(created.id).to.be.a('number');",
+                  "pm.expect(created.host_id).to.be.a('number');",
+                  "pm.expect(created.host_id).to.not.eql(999);",
+                  "pm.collectionVariables.set('setId', String(created.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List question sets - 200",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "url": "{{baseUrl}}/question-sets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('list answers 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json()).to.be.an('array');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read created question set - 200",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "url": "{{baseUrl}}/question-sets/{{setId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('read answers 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().id).to.eql(Number(pm.collectionVariables.get('setId')));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update question set - 200",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Week 11 Shinobi Review\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/question-sets/{{setId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('update answers 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().title).to.eql('Week 11 Shinobi Review');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Invalid title - 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"ab\",\"subject\":\"Review\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/question-sets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('invalid title answers 400', function () { pm.response.to.have.status(400); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('VALIDATION_FAILED');",
+                  "pm.expect(pm.response.json().error.details).to.be.an('array').that.is.not.empty;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Malformed JSON - 400 INVALID_JSON",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"broken\"",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/question-sets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('malformed JSON answers 400', function () { pm.response.to.have.status(400); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('INVALID_JSON');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing demo user - 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/question-sets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('missing user answers 401', function () { pm.response.to.have.status(401); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('AUTH_REQUIRED');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player cannot manage question sets - 403",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" }],
+            "url": "{{baseUrl}}/question-sets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong role answers 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Another host cannot update question set - 403",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{otherHostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Unauthorized edit\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/question-sets/{{setId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('non-owner update answers 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing question set - 404",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "url": "{{baseUrl}}/question-sets/2147483647"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('missing question set answers 404', function () { pm.response.to.have.status(404); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('QUESTION_SET_NOT_FOUND');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Sessions and players",
+      "item": [
+        {
+          "name": "Create session - 201 and server-generated code",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionSetId\": {{setId}},\n  \"timeLimit\": 600\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('session created with 201', function () { pm.response.to.have.status(201); });",
+                  "const session = pm.response.json();",
+                  "pm.expect(session.code).to.match(/^[1-9][0-9]{5}$/);",
+                  "pm.expect(session.status).to.eql('WAITING');",
+                  "pm.collectionVariables.set('sessionCode', session.code);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a second session for ALREADY_IN_GAME test",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionSetId\": {{setId}},\n  \"timeLimit\": 600\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second session created with 201', function () { pm.response.to.have.status(201); });",
+                  "const session = pm.response.json();",
+                  "pm.expect(session.code).to.match(/^[1-9][0-9]{5}$/);",
+                  "pm.collectionVariables.set('secondSessionCode', session.code);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Read session details - 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('session details answer 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().code).to.eql(pm.collectionVariables.get('sessionCode'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player joins - 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nickname\":\"Week11 Player\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('new player seat answers 201', function () { pm.response.to.have.status(201); });",
+                  "const player = pm.response.json();",
+                  "pm.expect(player.rejoined).to.eql(false);",
+                  "pm.collectionVariables.set('playerId', String(player.player_id));",
+                  "pm.collectionVariables.set('playerScore', String(player.score));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate nickname violates database constraint - 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{playerTwoSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nickname\":\"Week11 Player\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('duplicate nickname answers 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('NICKNAME_TAKEN');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player rejoins same session - 200 and same seat/score",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nickname\":\"Ignored on rejoin\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rejoin answers 200', function () { pm.response.to.have.status(200); });",
+                  "const player = pm.response.json();",
+                  "pm.expect(player.rejoined).to.eql(true);",
+                  "pm.expect(String(player.player_id)).to.eql(pm.collectionVariables.get('playerId'));",
+                  "pm.expect(String(player.score)).to.eql(pm.collectionVariables.get('playerScore'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List session players - 200",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player list answers 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json()).to.be.an('array').that.is.not.empty;"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start session - 200",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"RUNNING\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('session starts with 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().status).to.eql('RUNNING');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Existing player rejoins RUNNING session - 200",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nickname\":\"Ignored on running rejoin\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('existing seat can rejoin a RUNNING session with 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().rejoined).to.eql(true);",
+                  "pm.expect(String(pm.response.json().player_id)).to.eql(pm.collectionVariables.get('playerId'));",
+                  "pm.expect(String(pm.response.json().score)).to.eql(pm.collectionVariables.get('playerScore'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player without a seat cannot join RUNNING session - 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{playerTwoSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nickname\":\"New Player\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('new seat in RUNNING session answers 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('SESSION_NOT_JOINABLE');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player cannot join another RUNNING game - 409 ALREADY_IN_GAME",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nickname\":\"Second Game\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{secondSessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('one-game rule answers 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('ALREADY_IN_GAME');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Another host cannot close session - 403",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{otherHostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"CLOSED\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('non-owner status change answers 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Close session - 200",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"CLOSED\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('session closes with 200', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().status).to.eql('CLOSED');",
+                  "pm.expect(pm.response.json().ended_at).to.be.a('string');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "New player cannot join CLOSED session - 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{playerTwoSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nickname\":\"Closed Session\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('new seat in CLOSED session answers 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('SESSION_ENDED');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Closed session appears in Hub results",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Hub-Key", "value": "{{hubKey}}" }],
+            "url": "{{baseUrl}}/results"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('results answers 200 with Hub key', function () { pm.response.to.have.status(200); });",
+                  "const results = pm.response.json().results;",
+                  "pm.expect(results.some(function (game) { return game.session_code === pm.collectionVariables.get('sessionCode'); })).to.eql(true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Question set cleanup",
+      "item": [
+        {
+          "name": "Cannot delete question set used by a session - 409",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "url": "{{baseUrl}}/question-sets/{{setId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('in-use question set answers 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('QUESTION_SET_IN_USE');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create disposable question set",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Disposable Set\",\"subject\":\"Cleanup\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/question-sets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('disposable set created with 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('deleteSetId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete unused question set - 204",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "url": "{{baseUrl}}/question-sets/{{deleteSetId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('delete answers 204 with no body', function () { pm.response.to.have.status(204); pm.expect(pm.response.text()).to.eql(''); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Manual precondition checks",
+      "item": [
+        {
+          "name": "Full session rejects a new player - 409 SESSION_FULL",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nickname\":\"Overflow Player\"}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/sessions/{{capacitySessionCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('full session answers 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('SESSION_FULL');"
+                ]
+              }
+            }
+          ],
+          "disabled": true
+        }
+      ]
+    }
+  ]
+}
