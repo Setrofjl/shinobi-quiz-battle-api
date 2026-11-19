@@ -1,16 +1,14 @@
-
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    const questionFields = {
+  async up (queryInterface, Sequelize) {
+    await queryInterface.createTable('Question', {
       questionId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         primaryKey: true,
+        allowNull: false,
       },
-
       questionSetId: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -18,35 +16,29 @@ module.exports = {
           model: 'QuestionSet',
           key: 'questionSetId',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
-
       text: {
         type: Sequelize.TEXT,
         allowNull: false,
       },
-
       type: {
         type: Sequelize.STRING(30),
         allowNull: false,
       },
-
       correctIndex: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-
       timeLimit: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-    };
-
-    await queryInterface.createTable('Question', questionFields);
+    });
   },
 
-  async down(queryInterface) {
+  async down (queryInterface, Sequelize) {
     await queryInterface.dropTable('Question');
-  },
+  }
 };

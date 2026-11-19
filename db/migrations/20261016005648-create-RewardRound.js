@@ -1,16 +1,14 @@
-
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    const attributes = {
+  async up (queryInterface, Sequelize) {
+    await queryInterface.createTable('RewardRound', {
       rewardRoundId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         primaryKey: true,
+        allowNull: false,
       },
-
       playerId: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -18,25 +16,21 @@ module.exports = {
           model: 'Player',
           key: 'playerId',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
-
       duration: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-
       chakraEarned: {
         type: Sequelize.INTEGER,
         allowNull: false,
       },
-    };
-
-    await queryInterface.createTable('RewardRound', attributes);
+    });
   },
 
-  async down(queryInterface) {
+  async down (queryInterface, Sequelize) {
     await queryInterface.dropTable('RewardRound');
-  },
+  }
 };

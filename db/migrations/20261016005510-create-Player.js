@@ -4,13 +4,12 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const playerFields = {
+    await queryInterface.createTable('Player', {
       playerId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         primaryKey: true,
+        allowNull: false,
       },
-
       sessionId: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -18,10 +17,9 @@ module.exports = {
           model: 'GameSession',
           key: 'sessionId',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
-
       user_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -29,45 +27,35 @@ module.exports = {
           model: 'users',
           key: 'user_id',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
-
       nickname: {
         type: Sequelize.STRING(50),
         allowNull: false,
       },
-
       avatar: {
         type: Sequelize.STRING(100),
         allowNull: false,
       },
-
       chakra: {
         type: Sequelize.INTEGER,
         allowNull: false,
         defaultValue: 0,
       },
-    };
+    });
 
-    await queryInterface.createTable('Player', playerFields);
+    await queryInterface.addConstraint('Player', {
+      fields: ['sessionId', 'nickname'],
+      type: 'unique',
+      name: 'uq_player_session_nickname',
+    });
 
-    const uniqueConstraints = [
-      {
-        fields: ['sessionId', 'nickname'],
-        type: 'unique',
-        name: 'uq_player_session_nickname',
-      },
-      {
-        fields: ['sessionId', 'user_id'],
-        type: 'unique',
-        name: 'uq_player_session_user',
-      },
-    ];
-
-    for (const constraint of uniqueConstraints) {
-      await queryInterface.addConstraint('Player', constraint);
-    }
+    await queryInterface.addConstraint('Player', {
+      fields: ['sessionId', 'user_id'],
+      type: 'unique',
+      name: 'uq_player_session_user',
+    });
   },
 
   async down(queryInterface) {

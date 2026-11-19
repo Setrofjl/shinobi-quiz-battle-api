@@ -4,13 +4,12 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    const fields = {
+    await queryInterface.createTable('QuestionSet', {
       questionSetId: {
         type: Sequelize.INTEGER,
-        allowNull: false,
         primaryKey: true,
+        allowNull: false,
       },
-
       hostId: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -18,22 +17,18 @@ module.exports = {
           model: 'users',
           key: 'user_id',
         },
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
       },
-
       title: {
         type: Sequelize.STRING(100),
         allowNull: false,
       },
-
       subject: {
         type: Sequelize.STRING(100),
         allowNull: false,
       },
-    };
-
-    await queryInterface.createTable('QuestionSet', fields);
+    });
   },
 
   async down(queryInterface) {
