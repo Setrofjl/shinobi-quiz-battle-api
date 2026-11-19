@@ -1,0 +1,1344 @@
+{
+  "info": {
+    "name": "Shinobi Quiz Battle API - Week 12 M1",
+    "description": "Authentication, JWT, RBAC, user management, health, game information, and Hub API tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (!pm.collectionVariables.get('runId')) {",
+          "  const id = Date.now().toString();",
+          "  pm.collectionVariables.set('runId', id);",
+          "  pm.collectionVariables.set('testSchoolId', 'W12-' + id.slice(-12));",
+          "  pm.collectionVariables.set('testEmail', 'postman-' + id + '@example.test');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "playerToken",
+      "value": ""
+    },
+    {
+      "key": "newPlayerToken",
+      "value": ""
+    },
+    {
+      "key": "testUserId",
+      "value": ""
+    },
+    {
+      "key": "testSchoolId",
+      "value": ""
+    },
+    {
+      "key": "testEmail",
+      "value": ""
+    },
+    {
+      "key": "runId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Health check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Health status is OK\", function () { const data = pm.response.json(); pm.expect(data.status).to.eql('ok'); });",
+              "pm.test(\"Database is available\", function () { const data = pm.response.json(); pm.expect(data.database).to.eql('up'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Get game information",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/game-info",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "game-info"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Game slug is correct\", function () { const data = pm.response.json(); pm.expect(data.slug).to.eql('shinobi-quiz-battle'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Results without Hub key",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/results",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "results"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 401\", function () { pm.response.to.have.status(401); });",
+              "pm.test(\"Hub key is required\", function () { const data = pm.response.json(); pm.expect(data.error.code).to.eql('HUB_KEY_REQUIRED'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Results with Hub key",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Hub-Key",
+            "value": "{{hubKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/results",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "results"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Results response contains results\", function () { const data = pm.response.json(); pm.expect(data).to.have.property('results'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Results with invalid since value",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Hub-Key",
+            "value": "{{hubKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/results?since=not-a-date",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "results?since=not-a-date"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 400\", function () { pm.response.to.have.status(400); });",
+              "pm.test(\"Invalid date is rejected\", function () { const data = pm.response.json(); pm.expect(data.error.code).to.eql('INVALID_SINCE'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Admin login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"ADMIN-TEST-001\",\"password\":\"ShinobiDemo2026!\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Admin token is returned\", function () { const data = pm.response.json(); pm.expect(data.token).to.be.a('string'); pm.collectionVariables.set('adminToken', data.token); });",
+              "pm.test(\"Admin role is correct\", function () { const data = pm.response.json(); pm.expect(data.user.role).to.eql('ADMIN'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "07 - Admin gets own profile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Profile belongs to admin\", function () { const data = pm.response.json(); pm.expect(data.user.school_id).to.eql('ADMIN-TEST-001'); });",
+              "pm.test(\"Password hash is not exposed\", function () { const data = pm.response.json(); pm.expect(data.user).not.to.have.property('password_hash'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Profile without token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 401\", function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "09 - Profile with invalid token",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer invalid.token.value"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 401\", function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "10 - Profile with X-Demo-User only",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Demo-User",
+            "value": "24179723"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 401\", function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "11 - Player login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"24179723\",\"password\":\"ShinobiDemo2026!\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Player token is returned\", function () { const data = pm.response.json(); pm.expect(data.token).to.be.a('string'); pm.collectionVariables.set('playerToken', data.token); });",
+              "pm.test(\"Player role is correct\", function () { const data = pm.response.json(); pm.expect(data.user.role.toUpperCase()).to.eql('PLAYER'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "12 - Player gets own profile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{playerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Profile belongs to player\", function () { const data = pm.response.json(); pm.expect(data.user.school_id).to.eql('24179723'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "13 - Unknown account login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"UNKNOWN-ACCOUNT-999\",\"password\":\"WrongPass123\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 401\", function () { pm.response.to.have.status(401); });",
+              "pm.test(\"Invalid credentials response\", function () { const data = pm.response.json(); pm.expect(data.error.code).to.eql('INVALID_CREDENTIALS'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "14 - Register player with attempted ADMIN role injection",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"{{testSchoolId}}\",\"full_name\":\"Postman Test Player\",\"email\":\"{{testEmail}}\",\"password\":\"PostmanPass123\",\"role\":\"ADMIN\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 201\", function () { pm.response.to.have.status(201); });",
+              "pm.test(\"New account is forced to PLAYER\", function () { const data = pm.response.json(); pm.expect(data.user.role).to.eql('PLAYER'); pm.collectionVariables.set('testUserId', String(data.user.user_id)); });",
+              "pm.test(\"Password hash is not returned\", function () { const data = pm.response.json(); pm.expect(data.user).not.to.have.property('password_hash'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "15 - Register duplicate school ID",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"{{testSchoolId}}\",\"full_name\":\"Postman Test Player\",\"email\":\"{{testEmail}}\",\"password\":\"PostmanPass123\",\"role\":\"ADMIN\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 409\", function () { pm.response.to.have.status(409); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "16 - Register with weak password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"WEAK-PASS-001\",\"full_name\":\"Weak Password User\",\"email\":\"weak-password@example.test\",\"password\":\"123\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 400\", function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "17 - Register with invalid email",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"INVALID-EMAIL-001\",\"full_name\":\"Invalid Email User\",\"email\":\"not-an-email\",\"password\":\"ValidPass123\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 400\", function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "18 - Login with newly registered player",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"{{testSchoolId}}\",\"password\":\"PostmanPass123\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"New player token is saved\", function () { const data = pm.response.json(); pm.expect(data.token).to.be.a('string'); pm.collectionVariables.set('newPlayerToken', data.token); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "19 - Newly registered player profile",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/auth/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{newPlayerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Registered school ID matches\", function () { const data = pm.response.json(); pm.expect(data.user.school_id).to.eql(pm.collectionVariables.get('testSchoolId')); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "20 - Login with wrong password",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"ADMIN-TEST-001\",\"password\":\"IncorrectPassword123\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 401\", function () { pm.response.to.have.status(401); });",
+              "pm.test(\"Wrong password uses generic error\", function () { const data = pm.response.json(); pm.expect(data.error.code).to.eql('INVALID_CREDENTIALS'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "21 - Register with missing required fields",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/auth/register",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "auth",
+            "register"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"school_id\":\"INCOMPLETE-001\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 400\", function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "22 - Get users without token",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 401\", function () { pm.response.to.have.status(401); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "23 - Player cannot list users",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{playerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 403\", function () { pm.response.to.have.status(403); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "24 - Admin lists users",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"Users list is returned\", function () { const data = pm.response.json(); pm.expect(data.users).to.be.an('array'); });",
+              "pm.test(\"Test player exists in list\", function () { const data = pm.response.json(); const u = data.users.find(x => x.school_id === pm.collectionVariables.get('testSchoolId')); pm.expect(u).to.exist; pm.collectionVariables.set('testUserId', String(u.user_id)); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "25 - Admin cannot change own role",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/5/role",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "5",
+            "role"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\":\"PLAYER\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 409\", function () { pm.response.to.have.status(409); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "26 - Reject invalid role value",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{testUserId}}/role",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "{{testUserId}}",
+            "role"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\":\"SUPERADMIN\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 400\", function () { pm.response.to.have.status(400); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "27 - Reject nonexistent user ID",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/999999/role",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "999999",
+            "role"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\":\"PLAYER\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 404\", function () { pm.response.to.have.status(404); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "28 - Admin promotes test player to HOST",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{testUserId}}/role",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "{{testUserId}}",
+            "role"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\":\"HOST\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"User role becomes HOST\", function () { const data = pm.response.json(); pm.expect(data.user.role).to.eql('HOST'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "29 - HOST cannot access admin user list",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{newPlayerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 403\", function () { pm.response.to.have.status(403); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "30 - Admin restores test player role",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/{{testUserId}}/role",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "{{testUserId}}",
+            "role"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\":\"PLAYER\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });",
+              "pm.test(\"User role is restored to PLAYER\", function () { const data = pm.response.json(); pm.expect(data.user.role).to.eql('PLAYER'); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "31 - Admin can still access users after role update",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/users",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ]
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{adminToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 200\", function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "32 - Player cannot change another user role",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users/5/role",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users",
+            "5",
+            "role"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"role\":\"PLAYER\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{playerToken}}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Returns HTTP 403\", function () { pm.response.to.have.status(403); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

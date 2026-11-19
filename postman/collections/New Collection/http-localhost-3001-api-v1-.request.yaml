@@ -1,0 +1,11 @@
+$kind: http-request
+name: http://localhost:3001/api/v1/
+description: ""
+url: http://localhost:3001/api/v1/
+method: GET
+headers:
+  X-Demo-User: "24179111"
+body:
+  type: json
+  content: '{"title": "Philippine literature "}'
+order: 1000
