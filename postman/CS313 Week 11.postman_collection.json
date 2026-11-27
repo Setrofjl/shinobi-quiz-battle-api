@@ -105,6 +105,14 @@
     {
       "key": "capacitySessionReady",
       "value": "false"
+    },
+    {
+      "key": "questionBankSetId",
+      "value": ""
+    },
+    {
+      "key": "questionBankQuestionId",
+      "value": ""
     }
   ],
   "item": [
@@ -809,6 +817,408 @@
       ]
     },
     {
+      "name": "Question bank",
+      "item": [
+        {
+          "name": "Create question bank set",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Week 13 Question Bank\",\n  \"subject\": \"Shinobi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/question-sets"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('question set created', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('questionBankSetId', String(pm.response.json().id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Paging checks metadata",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/question-sets?page=2&limit=1&sort=questionSetId&order=asc"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second page has correct metadata', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().meta).to.eql({ page: 2, limit: 1, total: 2, pages: 2 });",
+                  "pm.expect(String(pm.response.json().data[0].id)).to.eql(pm.collectionVariables.get('questionBankSetId'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search with no matches returns empty data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/question-sets?q=no-matching-week13-set"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('empty search result is a 200 envelope', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().data).to.eql([]);",
+                  "pm.expect(pm.response.json().meta.total).to.eql(0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bad sort is rejected",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/question-sets?sort=questionSetId%3Bdrop%20table"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('bad sort returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create a question with choices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Which energy powers a shinobi?\",\n  \"type\": \"multiple-choice\",\n  \"timeLimit\": 20,\n  \"position\": 99,\n  \"choices\": [\n    {\n      \"text\": \"Chakra\",\n      \"isCorrect\": true,\n      \"position\": 99\n    },\n    {\n      \"text\": \"Steam\",\n      \"isCorrect\": false,\n      \"position\": 99\n    },\n    {\n      \"text\": \"Dust\",\n      \"isCorrect\": false,\n      \"position\": 99\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/question-sets/{{questionBankSetId}}/questions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('question created with 201', function () { pm.response.to.have.status(201); });",
+                  "const question = pm.response.json().question;",
+                  "pm.expect(question.position).to.eql(0);",
+                  "pm.expect(question.correct_index).to.eql(0);",
+                  "pm.expect(question.choices.map(function (choice) { return choice.position; })).to.eql([0, 1, 2]);",
+                  "pm.collectionVariables.set('questionBankQuestionId', String(question.id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Two correct choices return 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Invalid question\",\n  \"type\": \"multiple-choice\",\n  \"timeLimit\": 20,\n  \"choices\": [\n    {\n      \"text\": \"One\",\n      \"isCorrect\": true\n    },\n    {\n      \"text\": \"Two\",\n      \"isCorrect\": true\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/question-sets/{{questionBankSetId}}/questions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('two correct choices are rejected', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player cannot add a question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Unauthorized question\",\n  \"type\": \"multiple-choice\",\n  \"timeLimit\": 20,\n  \"choices\": [\n    {\n      \"text\": \"One\",\n      \"isCorrect\": true\n    },\n    {\n      \"text\": \"Two\",\n      \"isCorrect\": false\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/question-sets/{{questionBankSetId}}/questions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player question creation returns 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Include loads questions and choices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/question-sets/{{questionBankSetId}}?include=questions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('include returns nested questions', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().questions).to.have.length(1);",
+                  "pm.expect(pm.response.json().questions[0].choices).to.have.length(3);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editing a set in use returns 409",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Frozen set update\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/question-sets/1"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('used question set is frozen', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('QUESTION_SET_IN_USE');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Good cover upload",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "cover",
+                  "type": "file",
+                  "src": "postman/fixtures/cover.png"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/question-sets/{{questionBankSetId}}/cover"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('valid PNG cover uploads', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().cover_url).to.match(/^\\/uploads\\/covers\\/set-/);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong file type returns 400",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "cover",
+                  "type": "file",
+                  "src": "postman/fixtures/not-a-picture.txt"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/question-sets/{{questionBankSetId}}/cover"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('non-image cover is rejected', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Oversized image returns 413",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "cover",
+                  "type": "file",
+                  "src": "postman/fixtures/too-big.jpg"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/question-sets/{{questionBankSetId}}/cover"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('cover over 1 MB is rejected', function () { pm.response.to.have.status(413); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Hub Contract",
       "item": [
         {
@@ -915,8 +1325,9 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('list answers 200', function () { pm.response.to.have.status(200); });",
-                  "pm.expect(pm.response.json()).to.be.an('array');"
+                  "pm.test('list answers 200 in the pagination envelope', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().data).to.be.an('array');",
+                  "pm.expect(pm.response.json().meta).to.have.keys('page', 'limit', 'total', 'pages');"
                 ]
               }
             }

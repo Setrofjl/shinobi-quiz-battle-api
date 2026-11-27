@@ -94,6 +94,11 @@ Base URL: `http://localhost:3001/api/v1`
 | GET | `/question-sets/:id` | Host or admin | 200 |
 | PATCH | `/question-sets/:id` | Owner or admin | 200 |
 | DELETE | `/question-sets/:id` | Owner or admin | 204 |
+| GET | `/question-sets/:id/questions` | Question-set owner | 200 |
+| POST | `/question-sets/:id/questions` | Question-set owner | 201 |
+| PATCH | `/question-sets/:id/questions/:questionId` | Question-set owner | 200 |
+| DELETE | `/question-sets/:id/questions/:questionId` | Question-set owner | 204 |
+| PUT | `/question-sets/:id/cover` | Question-set owner or admin | 200 |
 | POST | `/sessions` | Host or admin | 201 |
 | GET | `/sessions/:code` | Public | 200 |
 | PATCH | `/sessions/:code` | Session host or admin | 200 |
@@ -117,7 +122,11 @@ Content-Type: application/json
 ```
 
 `hostId` is ignored; the server always assigns the authenticated user's ID. Titles are 3–100 characters. `subject` is required on creation by the existing database schema and is limited to 60 characters by the API. PATCH accepts either field.
-Deleting a question set that is referenced by any session returns `409 QUESTION_SET_IN_USE`.
+The list accepts `page`, `limit`, `sort`, `order`, and `q`; it responds with `{ "data": [], "meta": { "page": 1, "limit": 10, "total": 0, "pages": 0 } }`. `sort` is restricted to `questionSetId`, `title`, or `subject`. A set used by a game cannot be changed or deleted and returns `409 QUESTION_SET_IN_USE`.
+
+Read a set and its nested questions and choices with `GET /question-sets/:id?include=questions`. Add a question with a `choices` array; exactly one item must have `"isCorrect": true`. The server assigns question and choice positions and ignores client-supplied positions. Question writes and choice writes share one database transaction.
+
+Upload one PNG or JPEG as form-data field `cover` to `/question-sets/:id/cover`. Files are limited to 1 MB, saved under a generated server filename, and served from `/uploads`. The response includes the public `cover_url`.
 
 The existing `QuestionSet` migration has a required subject column, a 100-character title column, and no `is_public` or creation-timestamp column. The API therefore does not accept or return `is_public` or `created_at`; the migration was preserved rather than silently changing the existing data model.
 
