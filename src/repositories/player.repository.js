@@ -35,7 +35,10 @@ function findRunningSeatElsewhere(userId, sessionId, transaction) {
     include: [{
       model: GameSession,
       as: 'session',
-      where: { status: 'RUNNING' },
+      where: {
+        status: 'RUNNING',
+        [Op.or]: [{ endsAt: null }, { endsAt: { [Op.gte]: new Date() } }],
+      },
       attributes: [],
     }],
     transaction,
@@ -44,6 +47,10 @@ function findRunningSeatElsewhere(userId, sessionId, transaction) {
 
 function countBySession(sessionId, transaction) {
   return Player.count({ where: { sessionId }, transaction });
+}
+
+function findAvatar(sessionId, avatar, transaction) {
+  return Player.findOne({ where: { sessionId, avatar }, transaction });
 }
 
 function create(data, transaction) {
@@ -62,6 +69,7 @@ module.exports = {
   findSeat,
   findRunningSeatElsewhere,
   countBySession,
+  findAvatar,
   create,
   findAllBySession,
 };

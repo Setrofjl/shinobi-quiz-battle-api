@@ -13,13 +13,7 @@ async function findFinishedGamePlayers(since) {
       account.school_id,
       player.nickname,
       player.chakra AS score,
-      (
-        COUNT(DISTINCT answer."questionId") = (
-          SELECT COUNT(*)
-          FROM "Question" question
-          WHERE question."questionSetId" = game."questionSetId"
-        )
-      ) AS completed
+      (COUNT(answer."answerId") > 0) AS completed
     FROM "GameSession" game
     JOIN "Player" player
       ON player."sessionId" = game."sessionId"

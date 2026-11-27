@@ -104,6 +104,10 @@ Base URL: `http://localhost:3001/api/v1`
 | PATCH | `/sessions/:code` | Session host or admin | 200 |
 | POST | `/sessions/:code/players` | Any known user | 201 new seat; 200 rejoin |
 | GET | `/sessions/:code/players` | Public | 200 |
+| GET | `/sessions/:code/question` | Seated player | 200 |
+| POST | `/sessions/:code/answers` | Seated player | 200 |
+| POST | `/sessions/:code/rewards` | Reward owner | 200 |
+| GET | `/sessions/:code/leaderboard?limit=10` | Public | 200 |
 
 ### Question sets
 
@@ -158,7 +162,7 @@ Content-Type: application/json
 }
 ```
 
-The server creates a six-digit join code and starts the session in `WAITING`. To start or close it, send `{"status":"RUNNING"}` or `{"status":"CLOSED"}` to `PATCH /sessions/:code`. Closing records `endTime`, which makes the game available from `/results`.
+The server creates a six-digit join code and starts the session in `WAITING`. To start or close it, send `{"status":"RUNNING"}` or `{"status":"CLOSED"}` to `PATCH /sessions/:code`. Starting records `started_at` and `ends_at` exactly 10 minutes apart, regardless of the legacy `timeLimit` request field. Starting also sets every seated player's first question and start time. A host may close a running game early; expired games are closed lazily by gameplay, session, leaderboard, and results requests.
 
 Join or rejoin:
 
@@ -169,10 +173,18 @@ Content-Type: application/json
 ```
 
 ```json
-{ "nickname": "Kushina" }
+{ "display_name": "Kushina", "avatar": "kushina" }
 ```
 
-New seats start with score 0 and the schema-required avatar value `default`. A returning account gets its original seat and score. New seats are accepted only in `WAITING` sessions, subject to the 30-player game limit and the one-running-game rule.
+An avatar can only be used once in a session. New seats start with 0 Chakra; a returning account gets its original seat and Chakra. The legacy `nickname` field is still accepted for existing clients and receives a unique generated default avatar when no avatar is supplied. New seats are accepted only in `WAITING` sessions, subject to the 30-player game limit and the one-running-game rule.
+
+### Gameplay, Chakra and Ninja Ranks
+
+After the host starts a game, each seated player uses their own `GET /sessions/:code/question` endpoint. The question and choices never include correctness. Submit only `{ "question_id": 1, "choice_id": 2 }` to `POST /sessions/:code/answers`; the server checks the current question and choice, records the answer, and advances the player's position. Skipping and answering a question twice in the same round return `409`. After the last question, the player wraps to question one in the next round.
+
+A correct answer creates a server-timed five-second Reward Round with server-generated Balloon (+10 Chakra), Chest (+25), and Bomb (-10) objects. Claim one by sending only `reward_round_id` and `object_id` to `/sessions/:code/rewards`. A claim after five seconds is marked claimed but grants zero Chakra; an unclaimed reward never changes Chakra. Chakra cannot fall below zero. Chakra changes and the claimed state are committed transactionally, and the server never accepts correctness, time, or reward values from the client.
+
+`GET /sessions/:code/leaderboard?limit=10` sorts by Chakra descending and returns `{ "data": [...], "meta": {...} }`. Tied positions share rank using competition ranking (1, 2, 2, 4) and the same Ninja Rank: Kage, Jonin, Chunin, then Genin. The final leaderboard remains available after the game closes.
 
 ### Hub Contract results
 
@@ -181,7 +193,7 @@ GET /api/v1/results
 X-Hub-Key: <the configured HUB_API_KEY>
 ```
 
-Only closed sessions with an end time appear in results. Missing or incorrect Hub keys receive 401.
+Only closed sessions with an end time appear in results. A player counts as completed if they were seated when the game ended and answered at least one question; `/results` uses this same rule. Missing or incorrect Hub keys receive 401. The `since` parameter filters on the game's end time.
 
 ### Errors
 
@@ -203,12 +215,12 @@ Validation errors and malformed JSON return 400; missing identity returns 401; r
 
 ## Postman
 
-Import [`postman/CS313 Week 11.postman_collection.json`](./postman/CS313%20Week%2011.postman_collection.json) into Postman. Set `baseUrl` if needed. The collection covers CRUD, authentication/ownership, invalid JSON, joining/rejoining, status transitions, capacity conflict, duplicate nickname mapping, and results.
+Import [`postman/CS313 Week 11.postman_collection.json`](./postman/CS313%20Week%2011.postman_collection.json) into Postman. Set `baseUrl` if needed and run the login folder first. The exported collection has 103 requests, including the **Play a whole game** folder for multiple players, reward claims and expiries, round wrapping, tie ranks, session closing, and Hub results.
 
 The capacity-full request is a manual-precondition case: populate its session with 30 distinct accounts before enabling it. For a fresh demo database, duplicate nickname is exercised with two different seeded players.
 
 ## Existing game rules and tables
 
-A player completes a game after answering every question in its question set, whether answers are correct or incorrect. Final score is the player's Chakra total.
+A player counts as completed for `/results` after answering at least one question before the game ends. Final score and leaderboard order use the player's Chakra total.
 
-Database tables are defined by the Sequelize CLI migrations: `users`, `QuestionSet`, `GameSession`, `Player`, `Question`, `Answer`, `RewardRound`, and `RewardObject`. Sessions and players use the existing camel-case column names; the API maps those names into client-facing JSON.
+Database tables are defined by the Sequelize CLI migrations: `users`, `QuestionSet`, `GameSession`, `Player`, `Question`, `Answer`, `RewardRound`, `RewardObject`, and `reward_rounds`. Sessions and players retain existing camel-case columns where required; gameplay timing fields use snake case.

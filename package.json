@@ -14,7 +14,8 @@
     "db:seed:undo": "sequelize-cli db:seed:undo:all",
     "db:reset": "node scripts/db-wipe.js && sequelize-cli db:migrate && sequelize-cli db:seed:all",
     "db:check": "node scripts/db-check.js",
-    "check": "node scripts/ci-check.js"
+    "check": "node scripts/ci-check.js",
+    "test": "jest --runInBand"
   },
   "engines": {
     "node": ">=22"

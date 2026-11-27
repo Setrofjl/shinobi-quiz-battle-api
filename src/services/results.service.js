@@ -1,6 +1,7 @@
 // Hub Contract rule 7: builds the results of finished games in the shared format.
 // You do NOT need to change this file. Your work is in results.repository.js.
 const resultsRepository = require('../repositories/results.repository');
+const sessionRepository = require('../repositories/session.repository');
 
 // Ranks completed players by score. Equal scores share a rank: 1, 1, 3 ...
 function rankPlayers(players) {
@@ -19,6 +20,7 @@ function rankPlayers(players) {
 }
 
 async function listFinishedGames(since) {
+  await sessionRepository.closeExpiredSessions(new Date());
   const rows = await resultsRepository.findFinishedGamePlayers(since);
 
   // One entry per finished game, in the order the games ended.

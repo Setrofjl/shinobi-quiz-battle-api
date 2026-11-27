@@ -37,6 +37,16 @@ module.exports = (sequelize, DataTypes) => sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+    startedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'started_at',
+    },
+    endsAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'ends_at',
+    },
   },
   {
     tableName: 'GameSession',
