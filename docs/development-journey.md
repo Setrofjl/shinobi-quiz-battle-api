@@ -16,6 +16,15 @@ One entry per milestone, written the week you did it. Newest at the bottom.
 - What I would explain to a classmate: 401 means the request is unauthenticated; 403 means the authenticated account lacks permission.
 
 ## M2 · The question bank
+- Dates worked: Nov 27, 2026 · Time spent: not tracked
+- Goal: Add paginated question-set and question lists, nested choices, frozen-set rules and safe cover uploads.
+- What I built: A Choice model and migration, transaction-backed question endpoints, allow-listed search/sorting, and PNG/JPEG cover storage.
+- Evidence: Focused question-bank API tests passed; the Question bank Postman folder covers pagination, nested content, validation and uploads.
+- Problem I hit: Existing questions had no choice model or generated IDs, while gameplay relies on the existing `correctIndex`.
+- How I solved it: Added normalized choices and database sequences/positions, and derive `correctIndex` from the single correct choice to preserve gameplay compatibility.
+- Decision I made and why: Keep choices normalized in their own table and save them in the same transaction as the question; this adds a migration but prevents partial question records.
+- Changes to my design set: Added question positions, a Choice table, and nullable question-set cover URL; no relationship changes outside the question bank.
+- What I would explain to a classmate: A joined eager load reads questions and choices together, avoiding one extra query per question.
 
 ## M3 · Gameplay
 

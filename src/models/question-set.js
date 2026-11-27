@@ -21,6 +21,11 @@ module.exports = (sequelize, DataTypes) => sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: false,
     },
+    coverUrl: {
+      type: DataTypes.STRING(255),
+      allowNull: true,
+      field: 'cover_url',
+    },
   },
   {
     tableName: 'QuestionSet',

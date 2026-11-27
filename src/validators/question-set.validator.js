@@ -1,6 +1,24 @@
 'use strict';
 
-const { body, param } = require('express-validator');
+const { body, param, query } = require('express-validator');
+const { pageRules, sortRules } = require('./list.validator');
+
+const listRules = [
+  ...pageRules,
+  ...sortRules(['questionSetId', 'title', 'subject']),
+  query('q')
+    .optional()
+    .isString().withMessage('q must be text')
+    .bail()
+    .trim()
+    .isLength({ max: 100 }).withMessage('q must be at most 100 characters long'),
+];
+
+const includeRules = [
+  query('include')
+    .optional()
+    .isIn(['questions']).withMessage('include must be questions'),
+];
 
 const idParam = [
   param('id')
@@ -47,4 +65,4 @@ const updateRules = [
     .isLength({ max: 60 }).withMessage('subject must be at most 60 characters long'),
 ];
 
-module.exports = { idParam, createRules, updateRules };
+module.exports = { idParam, listRules, includeRules, createRules, updateRules };
