@@ -2,12 +2,16 @@ const { Sequelize, DataTypes } = require('sequelize');
 const env = require('../config/env');
 const dbConfig = require('../config/database')[env.nodeEnv];
 
-const sequelize = new Sequelize(
-  dbConfig.database,
-  dbConfig.username,
-  dbConfig.password,
-  dbConfig
-);
+const sequelizeOptions = { ...dbConfig };
+delete sequelizeOptions.use_env_variable;
+const sequelize = env.databaseUrl
+  ? new Sequelize(env.databaseUrl, sequelizeOptions)
+  : new Sequelize(
+    dbConfig.database,
+    dbConfig.username,
+    dbConfig.password,
+    sequelizeOptions
+  );
 
 const GameSession = require('./game-session')(sequelize, DataTypes);
 const User = require('./user')(sequelize, DataTypes);

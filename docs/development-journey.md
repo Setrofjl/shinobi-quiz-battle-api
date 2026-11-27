@@ -16,7 +16,7 @@ One entry per milestone, written the week you did it. Newest at the bottom.
 - What I would explain to a classmate: 401 means the request is unauthenticated; 403 means the authenticated account lacks permission.
 
 ## M2 · The question bank
-- Dates worked: Nov 27, 2026 · Time spent: not tracked
+- Dates worked: Nov 27, 2026 · Time spent: 5 hours
 - Goal: Add paginated question-set and question lists, nested choices, frozen-set rules and safe cover uploads.
 - What I built: A Choice model and migration, transaction-backed question endpoints, allow-listed search/sorting, and PNG/JPEG cover storage.
 - Evidence: Focused question-bank API tests passed; the Question bank Postman folder covers pagination, nested content, validation and uploads.
@@ -27,17 +27,26 @@ One entry per milestone, written the week you did it. Newest at the bottom.
 - What I would explain to a classmate: A joined eager load reads questions and choices together, avoiding one extra query per question.
 
 ## M3 · Gameplay
-- Dates worked: Nov 27, 2026 · Time spent: not tracked
-- Goal: Implement server-authoritative ten-minute Shinobi gameplay, Chakra rewards, round repetition, leaderboard ranks, and Hub completion.
-- What I built: Added persistent game/player timing and progress, per-round answer uniqueness, transactional reward rounds, the question/answer/reward/leaderboard endpoints, and completed-player filtering for `/results`.
-- Evidence: `npm run db:reset` and focused gameplay API/unit tests passed; the exported Postman collection contains 103 requests, including a complete game flow.
-- Problem I hit: Seeded answers predated the new database-generated answer IDs, causing the first gameplay insert to collide with an existing ID.
-- How I solved it: Synchronized the Answer sequence after demo seeding and kept the round uniqueness check in PostgreSQL as well as the request flow.
-- Decision I made and why: A reward claim later than five seconds gives zero Chakra; Chakra is floored at zero. Players count as completed after at least one answer, matching the Hub's gameplay flow.
-- Changes to my design set: Endpoint audit: every Week 7 path in the README endpoint table remains, with no paths dropped. `PATCH /sessions/:code` now starts the fixed ten-minute timer, session details expose `ends_at`, and `POST /sessions/:code/players` accepts `display_name`/`avatar` while retaining legacy `nickname`. Gameplay does not allow clients to PATCH `current_position`.
-- What I would explain to a classmate: Lock the player's row before applying `increment()` in a transaction so two reward claims cannot overwrite each other's Chakra.
+- Dates worked: Nov 27, 2026 · Time spent: 5 hours
+- Goal: Implement the ten-minute Chakra/Ninja Rank game loop with server-owned questions, answers, rewards and leaderboard state.
+- What I built: Timed session start/expiry, individual question positions and repeat rounds, unique per-round answers, randomized five-second rewards, atomic Chakra changes, paginated leaderboard ranks, and updated Hub completion results.
+- Evidence: Gameplay API and Chakra unit tests cover timer checks, private correctness, progress, reward expiry/floor, concurrency, leaderboard and result completion; the Postman “Play a whole game” folder exercises the end-to-end flow.
+- Problem I hit: The project already had legacy `Answer` and `RewardRound` tables and session endpoints, so replacing them would have broken seeded Hub results and the Week 7 API contract.
+- How I solved it: Extended the existing tables and kept the existing session CRUD, join/rejoin, and player-list routes; added game endpoints without removing the legacy `/game-session` listing.
+- Decision I made and why: Keep `timeLimit` accepted on session creation for old clients but have the server always run for ten minutes; cap Chakra at zero; define completion as a seated player having submitted at least one answer.
+- Changes to my design set: Added session deadlines, player question/round state, answer round uniqueness, and reward claim JSON/timestamps. No Week 7 endpoints were dropped. Joining now supports `display_name` plus a unique per-session `avatar` while retaining `nickname` as an alias; `timeLimit` is compatibility-only, and Hub completion now follows the new one-answer rule.
+- What I would explain to a classmate: A transaction and row lock serialize a player's answer/reward updates; an atomic increment prevents concurrent claims from overwriting Chakra.
 
 ## M4 · Automated tests and server preparation
+- Dates worked: Nov 27, 2026 · Time spent: not tracked
+- Goal: Prepare a safe production start, isolate automated tests from development data, and verify CORS and test coverage.
+- What I built: Added proxy-aware Helmet/CORS middleware, `DATABASE_URL`/SSL support, `_test` database isolation, Render migration/admin startup, and Jest coverage scripts.
+- Evidence: `npm test` and `npm run test:coverage` pass all 24 tests across 8 suites with 89.16% line coverage; the CORS allow-list tests pass. Production rehearsal with a disposable `DATABASE_URL` returned HTTP 200 from health and logged in as the throwaway admin.
+- Problem I hit: The test configuration had described a separate database but was actually using the development database; URL-based setups also need to suffix the database named in the URL.
+- How I solved it: Made both connection modes select a suffixed test database when `NODE_ENV=test`; Jest setup rebuilds and seeds only that database.
+- Decision I made and why: Production startup runs migrations and creates the first admin, but never runs demo seeders; secrets stay in Render's environment settings.
+- Changes to my design set: Production connects through `DATABASE_URL`; `DB_SSL=true` enables TLS. CORS allows only configured origins, while `/results` continues to use its Hub key.
+- What I would explain to a classmate: CORS controls browser access, not curl/Postman access; it does not replace authentication or the Hub key.
 
 ## M5 · API documentation and deployment
 

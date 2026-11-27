@@ -235,7 +235,7 @@ async function claimReward(code, user, { rewardRoundId, objectId }) {
 
     const elapsedMs = new Date().getTime() - new Date(round.startedAt).getTime();
     const requestedDelta = chakraFor(object.type, elapsedMs);
-    const chakraDelta = Math.max(-player.chakra, requestedDelta);
+    const chakraDelta = Math.max(0, player.chakra + requestedDelta) - player.chakra;
     if (chakraDelta !== 0) {
       await player.increment('chakra', { by: chakraDelta, transaction });
     }

@@ -38,10 +38,16 @@ The API listens at `http://localhost:3001/api/v1` by default.
 | `DB_NAME` | `shinobi_quiz_battle` | Database name |
 | `DB_USER` | `postgres` | Database user |
 | `DB_PASSWORD` | (local password) | PostgreSQL password |
+| `DATABASE_URL` | (optional PostgreSQL URL) | When set, replaces the five `DB_` connection settings. Tests use a `_test` database name. |
+| `DB_SSL` | `false` | Set to `true` when the PostgreSQL connection requires SSL. |
 | `HUB_API_KEY` | `dev-hub-key` | Required by the Library Game Hub to read results |
 | `JWT_SECRET` | (64 random characters) | Secret used to sign login tokens |
 | `JWT_EXPIRES_IN` | `1h` | Login token lifetime |
 | `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed browser origins |
+| `ADMIN_SCHOOL_ID` | (optional) | Initial production administrator school ID |
+| `ADMIN_PASSWORD` | (optional) | Initial production administrator password (at least 12 characters) |
+
+When `DATABASE_URL` is set, `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASSWORD` are optional. `DB_SSL=true` enables PostgreSQL SSL. In test mode, the configured database name is suffixed with `_test`; test setup creates, migrates, and seeds this separate database.
 
 ## Database scripts
 
@@ -56,6 +62,19 @@ The API listens at `http://localhost:3001/api/v1` by default.
 | `npm run db:check` | Count rows in each table |
 | `npm run db:reset` | **Destructive:** empty schema, migrate, and reload seed data |
 | `npm run check` | **Destructive:** rebuilds the configured database and runs the Hub Contract checks |
+| `npm test` | Run Jest unit and HTTP tests against the separate `_test` database |
+| `npm run test:coverage` | Run the Jest suite and generate coverage |
+
+## How to run the tests
+
+Set the usual local PostgreSQL connection variables in `.env`, or set `DATABASE_URL`; test mode connects to `<DB_NAME>_test` (or appends `_test` to the URL database name) rather than the development or production database. Jest's global setup creates the test database if needed, rebuilds its schema, and loads demo data. Run:
+
+```powershell
+npm test
+npm run test:coverage
+```
+
+Never point `DB_NAME` or `DATABASE_URL` at a database containing data you need to keep when running destructive database scripts.
 
 ## Authentication and permissions
 

@@ -5,6 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "start:render": "sequelize-cli db:migrate && node scripts/create-admin.js && node src/server.js",
     "dev": "node --watch src/server.js",
     "db:create": "sequelize-cli db:create",
     "db:migrate": "sequelize-cli db:migrate",
@@ -15,7 +16,16 @@
     "db:reset": "node scripts/db-wipe.js && sequelize-cli db:migrate && sequelize-cli db:seed:all",
     "db:check": "node scripts/db-check.js",
     "check": "node scripts/ci-check.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "test:coverage": "jest --runInBand --coverage"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "globalSetup": "./tests/setup/global-setup.js",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js"
+    ]
   },
   "engines": {
     "node": ">=22"

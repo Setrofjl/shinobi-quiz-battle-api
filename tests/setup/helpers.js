@@ -2,7 +2,7 @@
 const request = require('supertest');
 const app = require('../../src/app');
 
-// CHANGE THIS to the demo password your own seeder gives your test accounts (Week 12, Step 2).
+// Matches the demo password created by the test database seeder.
 const DEMO_PASSWORD = 'Aklat-Demo-2026';
 
 // Logs in a seeded account and returns its "Authorization" header value.
