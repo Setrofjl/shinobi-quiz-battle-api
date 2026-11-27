@@ -177,3 +177,16 @@ test('players answer their own questions, claim rewards and repeat after wrappin
   const playedGame = results.body.results.find((game) => game.session_code === code);
   expect(playedGame.players.find((player) => player.nickname === 'Gameplay One').completed).toBe(true);
 });
+
+test('gameplay routes preserve authentication and missing-session errors', async () => {
+  const player = await bearer('24179723');
+  const unauthenticated = await request(app).get('/api/v1/sessions/999998/question');
+  expect(unauthenticated.status).toBe(401);
+  expect(unauthenticated.body.error.code).toBe('AUTH_REQUIRED');
+
+  const missing = await request(app)
+    .get('/api/v1/sessions/999998/question')
+    .set('Authorization', player);
+  expect(missing.status).toBe(404);
+  expect(missing.body.error.code).toBe('SESSION_NOT_FOUND');
+});

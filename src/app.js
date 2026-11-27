@@ -2,12 +2,20 @@
 const express = require('express');
 const morgan = require('morgan');
 const path = require('path');
+const cors = require('cors');
+const helmet = require('helmet');
 const env = require('./config/env');
 const routes = require('./routes');
 const notFound = require('./middlewares/not-found');
 const errorHandler = require('./middlewares/error-handler');
 
 const app = express();
+
+app.set('trust proxy', 1);
+app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+app.use(cors({
+  origin: (origin, done) => done(null, !origin || env.corsOrigins.includes(origin)),
+}));
 
 // Middleware runs in this order for every request.
 if (env.nodeEnv !== 'test') app.use(morgan('dev'));   // 1. one log line per request

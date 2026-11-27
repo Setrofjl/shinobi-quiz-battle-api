@@ -152,6 +152,7 @@ describe('question bank', () => {
       .set('Authorization', host)
       .send({ ...validBody, choices: validBody.choices.map((choice) => ({ ...choice, isCorrect: true })) });
     expect(twoCorrect.status).toBe(400);
+    expect(twoCorrect.body.error.code).toBe('VALIDATION_FAILED');
 
     const playerWrite = await request(app)
       .post(`/api/v1/question-sets/${setId}/questions`)
