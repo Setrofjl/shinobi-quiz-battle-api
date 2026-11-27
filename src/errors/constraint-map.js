@@ -16,6 +16,16 @@ module.exports = {
     code: 'NICKNAME_TAKEN',
     message: 'That nickname is already used in this session.',
   },
+  uq_player_session_avatar: {
+    status: 409,
+    code: 'AVATAR_TAKEN',
+    message: 'That avatar is already taken in this session.',
+  },
+  uq_answer_player_question_round: {
+    status: 409,
+    code: 'ANSWER_ALREADY_SUBMITTED',
+    message: 'You have already answered this question in this round.',
+  },
   uq_player_session_user: {
     status: 409,
     code: 'SEAT_ALREADY_EXISTS',

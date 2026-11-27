@@ -5,7 +5,8 @@ const sessionRepository = require('../repositories/session.repository');
 const { conflict, notFound } = require('../errors/app-error');
 const gameInfo = require('../config/game-info');
 
-async function join(code, { nickname }, user) {
+async function join(code, { nickname, avatar }, user) {
+  await sessionRepository.closeExpiredSessions(new Date());
   return playerRepository.withJoinLocks(user.user_id, code, async (session, transaction) => {
     if (!session) {
       throw notFound('SESSION_NOT_FOUND', `No session has the code ${code}.`);
@@ -35,11 +36,17 @@ async function join(code, { nickname }, user) {
       throw conflict('SESSION_FULL', 'This game is full.');
     }
 
+    const selectedAvatar = avatar || `default-${user.user_id}`;
+    if (await playerRepository.findAvatar(session.sessionId, selectedAvatar, transaction)) {
+      throw conflict('AVATAR_TAKEN', 'That avatar is already taken in this game.');
+    }
+
     const player = await playerRepository.create({
       sessionId: session.sessionId,
       user_id: user.user_id,
       nickname,
-      avatar: 'default',
+      displayName: nickname,
+      avatar: selectedAvatar,
       chakra: 0,
     }, transaction);
     return { session, player, created: true };

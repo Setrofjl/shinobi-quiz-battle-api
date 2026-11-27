@@ -36,13 +36,33 @@ const statusRules = [
 
 const joinRules = [
   ...codeParam,
-  body('nickname')
-    .exists().withMessage('nickname is required')
+  body('display_name')
+    .optional()
+    .isString().withMessage('nickname must be text')
     .bail()
+    .trim()
+    .isLength({ min: 2, max: 24 }).withMessage('display_name must be 2 to 24 characters long'),
+  body('nickname')
+    .optional()
     .isString().withMessage('nickname must be text')
     .bail()
     .trim()
     .isLength({ min: 2, max: 24 }).withMessage('nickname must be 2 to 24 characters long'),
+  body('avatar')
+    .optional()
+    .isString().withMessage('avatar must be text')
+    .bail()
+    .trim()
+    .isLength({ min: 1, max: 100 }).withMessage('avatar must be 1 to 100 characters long'),
+  body().custom((_, { req }) => {
+    if (!req.body.display_name && !req.body.nickname) {
+      throw new Error('display_name is required');
+    }
+    if (req.body.display_name && !req.body.avatar) {
+      throw new Error('avatar is required with display_name');
+    }
+    return true;
+  }),
 ];
 
 module.exports = { codeParam, createRules, statusRules, joinRules };

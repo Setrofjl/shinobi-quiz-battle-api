@@ -10,7 +10,8 @@ function toJson(session) {
     host_id: session.hostId,
     question_set_id: session.questionSetId,
     time_limit: session.timeLimit,
-    started_at: session.startTime,
+    started_at: session.startedAt || session.startTime,
+    ends_at: session.endsAt,
     ended_at: session.endTime,
   };
 }

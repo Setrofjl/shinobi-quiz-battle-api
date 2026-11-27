@@ -44,6 +44,8 @@ module.exports = {
         timeLimit: 600,
         startTime: new Date('2026-10-10T01:00:00Z'),
         endTime: new Date('2026-10-10T01:10:00Z'),
+        started_at: new Date('2026-10-10T01:00:00Z'),
+        ends_at: new Date('2026-10-10T01:10:00Z'),
       },
       {
         sessionId: 2,
@@ -54,6 +56,8 @@ module.exports = {
         timeLimit: 600,
         startTime: null,
         endTime: null,
+        started_at: null,
+        ends_at: null,
       },
     ]);
 
@@ -63,6 +67,7 @@ module.exports = {
         sessionId: 1,
         user_id: player1.user_id,
         nickname: 'Kushina',
+        display_name: 'Kushina',
         avatar: 'kushina',
         chakra: 35,
       },
@@ -71,6 +76,7 @@ module.exports = {
         sessionId: 1,
         user_id: player2.user_id,
         nickname: 'Naruto',
+        display_name: 'Naruto',
         avatar: 'naruto',
         chakra: 25,
       },
@@ -79,6 +85,7 @@ module.exports = {
         sessionId: 1,
         user_id: player3.user_id,
         nickname: 'Hinata',
+        display_name: 'Hinata',
         avatar: 'hinata',
         chakra: 15,
       },
@@ -191,6 +198,36 @@ module.exports = {
       },
     ]);
 
+    await queryInterface.bulkInsert('reward_rounds', [
+      {
+        id: '00000000-0000-4000-8000-000000000001',
+        player_id: 1,
+        answer_id: 1,
+        objects: JSON.stringify([{ id: '00000000-0000-4000-8000-000000000011', type: 'chest' }]),
+        started_at: new Date('2026-10-10T01:01:00Z'),
+        claimed_at: new Date('2026-10-10T01:01:05Z'),
+        chakra_delta: 25,
+      },
+      {
+        id: '00000000-0000-4000-8000-000000000002',
+        player_id: 2,
+        answer_id: 6,
+        objects: JSON.stringify([{ id: '00000000-0000-4000-8000-000000000012', type: 'balloon' }]),
+        started_at: new Date('2026-10-10T01:01:00Z'),
+        claimed_at: new Date('2026-10-10T01:01:05Z'),
+        chakra_delta: 10,
+      },
+      {
+        id: '00000000-0000-4000-8000-000000000003',
+        player_id: 3,
+        answer_id: 11,
+        objects: JSON.stringify([{ id: '00000000-0000-4000-8000-000000000013', type: 'bomb' }]),
+        started_at: new Date('2026-10-10T01:01:00Z'),
+        claimed_at: new Date('2026-10-10T01:01:05Z'),
+        chakra_delta: -10,
+      },
+    ]);
+
     await db.query(`
       SELECT setval(
         '"GameSession_sessionId_seq"',
@@ -202,12 +239,25 @@ module.exports = {
         GREATEST(COALESCE((SELECT MAX("playerId") FROM "Player"), 1), 1),
         true
       );
+      SELECT setval(
+        '"Answer_answerId_seq"',
+        GREATEST(COALESCE((SELECT MAX("answerId") FROM "Answer"), 1), 1),
+        EXISTS (SELECT 1 FROM "Answer")
+      );
     `);
   },
 
   async down(queryInterface) {
     await queryInterface.bulkDelete('RewardObject', {
       rewardRoundId: [1, 2, 3],
+    }, {});
+
+    await queryInterface.bulkDelete('reward_rounds', {
+      id: [
+        '00000000-0000-4000-8000-000000000001',
+        '00000000-0000-4000-8000-000000000002',
+        '00000000-0000-4000-8000-000000000003',
+      ],
     }, {});
 
     await queryInterface.bulkDelete('RewardRound', {

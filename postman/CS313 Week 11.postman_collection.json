@@ -1600,7 +1600,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"questionSetId\": {{setId}},\n  \"timeLimit\": 600\n}",
+              "raw": "{\n  \"questionSetId\": {{questionBankSetId}},\n  \"timeLimit\": 600\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1641,7 +1641,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"questionSetId\": {{setId}},\n  \"timeLimit\": 600\n}",
+              "raw": "{\n  \"questionSetId\": {{questionBankSetId}},\n  \"timeLimit\": 600\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -2134,7 +2134,7 @@
                 "value": "Bearer {{hostToken}}"
               }
             ],
-            "url": "{{baseUrl}}/question-sets/{{setId}}"
+            "url": "{{baseUrl}}/question-sets/{{questionBankSetId}}"
           },
           "event": [
             {
@@ -2264,6 +2264,1339 @@
           ],
           "disabled": true,
           "description": "Manual precondition: set up a full session, set capacitySessionCode to its join code, then set capacitySessionReady to true."
+        }
+      ]
+    },
+    {
+      "name": "Play a whole game",
+      "item": [
+        {
+          "name": "Create 10-minute gameplay session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"questionSetId\":1,\"timeLimit\":600}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('gameSince', new Date().toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('game session is created', function () { pm.response.to.have.status(201); });",
+                  "const game = pm.response.json();",
+                  "pm.expect(game.status).to.eql('WAITING');",
+                  "pm.collectionVariables.set('gameCode', game.code);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player one joins with display name and avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"display_name\":\"Chakra One\",\"avatar\":\"game-avatar-one\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player takes a seat', function () { pm.response.to.have.status(201); });",
+                  "pm.expect(pm.response.json().display_name).to.be.a('string');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player two joins with display name and avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerTwoToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"display_name\":\"Chakra Two\",\"avatar\":\"game-avatar-two\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player takes a seat', function () { pm.response.to.have.status(201); });",
+                  "pm.expect(pm.response.json().display_name).to.be.a('string');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player three joins with display name and avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerThreeToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"display_name\":\"Chakra Three\",\"avatar\":\"game-avatar-three\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player takes a seat', function () { pm.response.to.have.status(201); });",
+                  "pm.expect(pm.response.json().display_name).to.be.a('string');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player four joins with display name and avatar",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{otherHostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"display_name\":\"Chakra Four\",\"avatar\":\"game-avatar-four\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player takes a seat', function () { pm.response.to.have.status(201); });",
+                  "pm.expect(pm.response.json().display_name).to.be.a('string');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate avatar is rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"display_name\":\"Avatar Collision\",\"avatar\":\"game-avatar-one\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/players"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('avatar is unique per session', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('AVATAR_TAKEN');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start the game and verify its server timer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"RUNNING\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('game starts with a ten-minute timer', function () { pm.response.to.have.status(200); });",
+                  "const game = pm.response.json();",
+                  "pm.expect(game.status).to.eql('RUNNING');",
+                  "pm.expect(new Date(game.ends_at).getTime() - new Date(game.started_at).getTime()).to.eql(600000);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A seated player receives a safe question",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('current question omits correctness', function () { pm.response.to.have.status(200); });",
+                  "const q = pm.response.json();",
+                  "pm.expect(JSON.stringify(q)).not.to.match(/is_correct|iscorrect/i);",
+                  "pm.collectionVariables.set('gq1Id', String(q.id));",
+                  "pm.collectionVariables.set('gq1CorrectChoice', String(q.choices[0].id));",
+                  "pm.collectionVariables.set('gq1WrongChoice', String(q.choices[1].id));",
+                  "pm.collectionVariables.set('gq5Id', '5');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "An unseated account cannot fetch a question",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('unseated player receives 403', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Missing bearer token cannot fetch a question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('gameplay requires login', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player two receives its own current question",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerTwoToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('second player gets question one', function () { pm.response.to.have.status(200); });",
+                  "const q = pm.response.json();",
+                  "pm.expect(q.id).to.eql(Number(pm.collectionVariables.get('gq1Id')));",
+                  "pm.collectionVariables.set('gq2CorrectChoice', String(q.choices[0].id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player three receives its own current question",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerThreeToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('third player gets question one', function () { pm.response.to.have.status(200); });",
+                  "const q = pm.response.json();",
+                  "pm.expect(q.id).to.eql(Number(pm.collectionVariables.get('gq1Id')));",
+                  "pm.collectionVariables.set('gq3CorrectChoice', String(q.choices[0].id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player one answers question one correctly",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq1Id}},\"choice_id\":{{gq1CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('correct answer starts a reward round', function () { pm.response.to.have.status(200); });",
+                  "const result = pm.response.json();",
+                  "pm.expect(result.correct).to.eql(true);",
+                  "pm.expect(result.reward_round.expires_in).to.eql(5);",
+                  "pm.collectionVariables.set('gReward1', result.reward_round.id);",
+                  "pm.collectionVariables.set('gChest1', result.reward_round.objects.find(function (o) { return o.type === 'chest'; }).id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player one claims a chest for 25 Chakra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reward_round_id\":\"{{gReward1}}\",\"object_id\":\"{{gChest1}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/rewards"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('chest grants 25 Chakra', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().chakra_delta).to.eql(25);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player two answers correctly",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerTwoToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq1Id}},\"choice_id\":{{gq2CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player two earns a reward', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().correct).to.eql(true);",
+                  "pm.collectionVariables.set('gReward2', pm.response.json().reward_round.id);",
+                  "pm.collectionVariables.set('gBalloon2', pm.response.json().reward_round.objects.find(function (o) { return o.type === 'balloon'; }).id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player two claims a balloon for 10 Chakra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerTwoToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reward_round_id\":\"{{gReward2}}\",\"object_id\":\"{{gBalloon2}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/rewards"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('balloon grants 10 Chakra', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().chakra_delta).to.eql(10);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player three answers correctly",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerThreeToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq1Id}},\"choice_id\":{{gq3CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player three earns a reward', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().correct).to.eql(true);",
+                  "pm.collectionVariables.set('gReward3', pm.response.json().reward_round.id);",
+                  "pm.collectionVariables.set('gBalloon3', pm.response.json().reward_round.objects.find(function (o) { return o.type === 'balloon'; }).id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player three claims a balloon for a tie",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerThreeToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reward_round_id\":\"{{gReward3}}\",\"object_id\":\"{{gBalloon3}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/rewards"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player three reaches the same Chakra as player two', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().chakra_delta).to.eql(10);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "A repeated answer in the same round is rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq1Id}},\"choice_id\":{{gq1CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('same-round duplicate answer returns 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Skipping a question is rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq5Id}},\"choice_id\":{{gq1CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('skipped question returns 409', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player one is assigned question two",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong answer path starts at question two', function () { pm.response.to.have.status(200); });",
+                  "const q = pm.response.json();",
+                  "pm.expect(q.id).to.eql(2);",
+                  "pm.collectionVariables.set('gq2Id', String(q.id));",
+                  "pm.collectionVariables.set('gq2WrongChoice', String(q.choices[1].id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong answer has no Reward Round",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq2Id}},\"choice_id\":{{gq2WrongChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong answer skips reward round', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json()).to.eql({ correct: false });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player advances after a wrong answer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong answer moves to the next question', function () { pm.response.to.have.status(200); });",
+                  "const q = pm.response.json();",
+                  "pm.expect(q.id).to.eql(3);",
+                  "pm.collectionVariables.set('gq3Id', String(q.id));",
+                  "pm.collectionVariables.set('gq3CorrectChoice', String(q.choices[0].id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Correct answer creates a late-claim reward",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq3Id}},\"choice_id\":{{gq3CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('question three answer is correct', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().correct).to.eql(true);",
+                  "pm.collectionVariables.set('gLateReward', pm.response.json().reward_round.id);",
+                  "pm.collectionVariables.set('gLateBomb', pm.response.json().reward_round.objects.find(function (o) { return o.type === 'bomb'; }).id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wait beyond the five-second reward window",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('rewardWaitStarted', String(Date.now()));",
+                  "setTimeout(function () { pm.collectionVariables.set('rewardWaitFinished', String(Date.now())); }, 6000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('the five-second reward window has elapsed', function () { pm.response.to.have.status(200); pm.expect(Number(pm.collectionVariables.get('rewardWaitFinished')) - Number(pm.collectionVariables.get('rewardWaitStarted'))).to.be.at.least(5000); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Late reward claim is marked but grants no Chakra",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reward_round_id\":\"{{gLateReward}}\",\"object_id\":\"{{gLateBomb}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/rewards"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('late claim changes no Chakra', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().chakra_delta).to.eql(0);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player one receives question four",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player advances to question four', function () { pm.response.to.have.status(200); });",
+                  "const q = pm.response.json();",
+                  "pm.expect(q.id).to.eql(4);",
+                  "pm.collectionVariables.set('gq4Id', String(q.id));",
+                  "pm.collectionVariables.set('gq4CorrectChoice', String(q.choices[1].id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player one answers question four",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq4Id}},\"choice_id\":{{gq4CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('question four answer succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().correct).to.eql(true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player one receives question five",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player advances to question five', function () { pm.response.to.have.status(200); });",
+                  "const q = pm.response.json();",
+                  "pm.expect(q.id).to.eql(5);",
+                  "pm.collectionVariables.set('gq5Id', String(q.id));",
+                  "pm.collectionVariables.set('gq5CorrectChoice', String(q.choices[0].id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player one answers question five and wraps",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq5Id}},\"choice_id\":{{gq5CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('last question answer succeeds', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().correct).to.eql(true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Question one repeats in round two",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/question"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('question repeats in a new round', function () { pm.response.to.have.status(200); });",
+                  "const q = pm.response.json();",
+                  "pm.expect(q.id).to.eql(Number(pm.collectionVariables.get('gq1Id')));",
+                  "pm.expect(q.round).to.eql(2);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Repeated question is answerable in the new round",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":{{gq1Id}},\"choice_id\":{{gq1CorrectChoice}}}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('same question is accepted in a later round', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().correct).to.eql(true);",
+                  "pm.collectionVariables.set('gUnclaimedReward', pm.response.json().reward_round.id);",
+                  "pm.collectionVariables.set('gUnclaimedObjectId', pm.response.json().reward_round.objects[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wait out an unclaimed reward round",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('rewardWaitStarted', String(Date.now()));",
+                  "setTimeout(function () { pm.collectionVariables.set('rewardWaitFinished', String(Date.now())); }, 6000);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('the five-second reward window has elapsed', function () { pm.response.to.have.status(200); pm.expect(Number(pm.collectionVariables.get('rewardWaitFinished')) - Number(pm.collectionVariables.get('rewardWaitStarted'))).to.be.at.least(5000); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Running leaderboard ranks ties and ignores unclaimed rewards",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/leaderboard?limit=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('leaderboard uses Chakra ranks and ties', function () { pm.response.to.have.status(200); });",
+                  "const runningData = pm.response.json().data;",
+                  "pm.expect(runningData.map(function (p) { return [p.rank, p.ninja_rank, p.chakra]; })).to.eql([[1, 'Kage', 25], [2, 'Jonin', 10], [2, 'Jonin', 10], [4, 'Genin', 0]]);",
+                  "pm.expect(runningData[0].display_name).to.eql('Chakra One');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Teacher closes the game",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"CLOSED\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('teacher closes the game', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().status).to.eql('CLOSED');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Answers after game close return 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"question_id\":2,\"choice_id\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/answers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('answers after closing are rejected', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reward claims after game close return 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reward_round_id\":\"{{gUnclaimedReward}}\",\"object_id\":\"{{gUnclaimedObjectId}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/rewards"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('reward claim after closing is rejected', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Final leaderboard preserves Ninja Ranks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/sessions/{{gameCode}}/leaderboard?limit=10"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('closed game has a final leaderboard', function () { pm.response.to.have.status(200); });",
+                  "const finalData = pm.response.json().data;",
+                  "pm.expect(finalData.map(function (p) { return p.rank; })).to.eql([1, 2, 2, 4]);",
+                  "pm.expect(finalData.map(function (p) { return p.ninja_rank; })).to.eql(['Kage', 'Jonin', 'Jonin', 'Genin']);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Hub results include the game completed during this run",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Hub-Key",
+                "value": "{{hubKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/results?since={{gameSince}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Hub results include this completed game', function () { pm.response.to.have.status(200); });",
+                  "const game = pm.response.json().results.find(function (g) { return g.session_code === pm.collectionVariables.get('gameCode'); });",
+                  "pm.expect(game).to.exist;",
+                  "pm.expect(game.players.filter(function (p) { return p.completed; }).length).to.be.greaterThan(0);"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

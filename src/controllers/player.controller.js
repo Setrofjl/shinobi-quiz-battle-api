@@ -8,6 +8,7 @@ function toJson(player) {
   return {
     player_id: player.playerId,
     nickname: player.nickname,
+    display_name: player.displayName || player.nickname,
     avatar: player.avatar,
     score: player.chakra,
   };
@@ -15,7 +16,10 @@ function toJson(player) {
 
 async function join(req, res) {
   const data = matchedData(req, { locations: ['params', 'body'] });
-  const result = await playerService.join(data.code, { nickname: data.nickname }, req.user);
+  const result = await playerService.join(data.code, {
+    nickname: data.display_name || data.nickname,
+    avatar: data.avatar,
+  }, req.user);
   res.status(result.created ? 201 : 200).json({
     ...toJson(result.player),
     rejoined: !result.created,

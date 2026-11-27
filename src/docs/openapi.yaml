@@ -3,16 +3,16 @@
 # (the check needs at least 15 operations, each with a summary and its responses).
 openapi: 3.0.3
 info:
-  title: CHANGE_ME Your Game API
+  title: Shinobi Quiz Battle API
   version: 1.0.0
   description: >
-    CHANGE_ME: one paragraph about your game. Implements Hub Contract v1.3. Every error answers { "error": { "code",
-    "message" } }.
+    Live quiz gameplay with server-timed Chakra reward rounds, repeated question rounds, and final Ninja Ranks.
+    Implements Hub Contract v1.3. Every error answers { "error": { "code", "message" } }.
 
 
     Log in with POST /auth/login, then click Authorize and paste the token.
   contact:
-    name: CHANGE_ME your name (your GitHub username)
+    name: Gipanao John Lawrenze Fortes (Setrofjl)
 servers:
   - url: /api/v1
     description: This server
@@ -201,6 +201,248 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           description: The X-Hub-Key header is missing or wrong
+  /sessions:
+    post:
+      tags:
+        - Gameplay
+      summary: Create a waiting game session
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [questionSetId, timeLimit]
+              properties:
+                questionSetId:
+                  type: integer
+                timeLimit:
+                  type: integer
+                  description: Legacy field; games always run for ten minutes.
+      responses:
+        "201":
+          description: The waiting game and its join code
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /sessions/{code}:
+    get:
+      tags:
+        - Gameplay
+      summary: Read session status and timing
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Session details
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - Gameplay
+      summary: Start or close a session as its host
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [RUNNING, CLOSED]
+      responses:
+        "200":
+          description: Updated session status and timing
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /sessions/{code}/players:
+    post:
+      tags:
+        - Gameplay
+      summary: Join a waiting session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [display_name, avatar]
+              properties:
+                display_name:
+                  type: string
+                avatar:
+                  type: string
+      responses:
+        "201":
+          description: Player seat created
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    get:
+      tags:
+        - Gameplay
+      summary: List seated players
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Players in the session
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /sessions/{code}/question:
+    get:
+      tags:
+        - Gameplay
+      summary: Read the caller's current question without correctness
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Question and safe choices
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /sessions/{code}/answers:
+    post:
+      tags:
+        - Gameplay
+      summary: Answer the caller's current question
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question_id, choice_id]
+              properties:
+                question_id:
+                  type: integer
+                choice_id:
+                  type: integer
+      responses:
+        "200":
+          description: Correctness and optional server-generated reward round
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /sessions/{code}/rewards:
+    post:
+      tags:
+        - Gameplay
+      summary: Claim an object in a reward round
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reward_round_id, object_id]
+              properties:
+                reward_round_id:
+                  type: string
+                  format: uuid
+                object_id:
+                  type: string
+                  format: uuid
+      responses:
+        "200":
+          description: Chakra delta applied (zero for a late claim)
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /sessions/{code}/leaderboard:
+    get:
+      tags:
+        - Gameplay
+      summary: Read Chakra scores and Ninja Ranks
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Ranked players in a data/meta envelope
+        "404":
+          $ref: "#/components/responses/NotFound"
   /auth/register:
     post:
       tags:

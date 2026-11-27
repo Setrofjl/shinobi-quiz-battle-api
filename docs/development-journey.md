@@ -27,6 +27,15 @@ One entry per milestone, written the week you did it. Newest at the bottom.
 - What I would explain to a classmate: A joined eager load reads questions and choices together, avoiding one extra query per question.
 
 ## M3 · Gameplay
+- Dates worked: Nov 27, 2026 · Time spent: not tracked
+- Goal: Implement server-authoritative ten-minute Shinobi gameplay, Chakra rewards, round repetition, leaderboard ranks, and Hub completion.
+- What I built: Added persistent game/player timing and progress, per-round answer uniqueness, transactional reward rounds, the question/answer/reward/leaderboard endpoints, and completed-player filtering for `/results`.
+- Evidence: `npm run db:reset` and focused gameplay API/unit tests passed; the exported Postman collection contains 103 requests, including a complete game flow.
+- Problem I hit: Seeded answers predated the new database-generated answer IDs, causing the first gameplay insert to collide with an existing ID.
+- How I solved it: Synchronized the Answer sequence after demo seeding and kept the round uniqueness check in PostgreSQL as well as the request flow.
+- Decision I made and why: A reward claim later than five seconds gives zero Chakra; Chakra is floored at zero. Players count as completed after at least one answer, matching the Hub's gameplay flow.
+- Changes to my design set: Endpoint audit: every Week 7 path in the README endpoint table remains, with no paths dropped. `PATCH /sessions/:code` now starts the fixed ten-minute timer, session details expose `ends_at`, and `POST /sessions/:code/players` accepts `display_name`/`avatar` while retaining legacy `nickname`. Gameplay does not allow clients to PATCH `current_position`.
+- What I would explain to a classmate: Lock the player's row before applying `increment()` in a transaction so two reward claims cannot overwrite each other's Chakra.
 
 ## M4 · Automated tests and server preparation
 

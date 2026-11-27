@@ -22,6 +22,11 @@ module.exports = (sequelize, DataTypes) => sequelize.define(
       type: DataTypes.STRING(50),
       allowNull: false,
     },
+    displayName: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      field: 'display_name',
+    },
     avatar: {
       type: DataTypes.STRING(100),
       allowNull: false,
@@ -30,6 +35,21 @@ module.exports = (sequelize, DataTypes) => sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       defaultValue: 0,
+    },
+    currentPosition: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      field: 'current_position',
+    },
+    round: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1,
+    },
+    questionStartedAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      field: 'question_started_at',
     },
   },
   {
