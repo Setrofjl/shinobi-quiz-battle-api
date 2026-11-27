@@ -31,7 +31,7 @@ The API listens at `http://localhost:3001/api/v1` by default.
 
 | Key | Example | Purpose |
 |---|---|---|
-| `NODE_ENV` | `development` | Application environment. The temporary demo-user middleware refuses to start in production. |
+| `NODE_ENV` | `development` | Application environment. |
 | `PORT` | `3001` | HTTP port |
 | `DB_HOST` | `127.0.0.1` | PostgreSQL host |
 | `DB_PORT` | `5433` | PostgreSQL port |
@@ -39,6 +39,9 @@ The API listens at `http://localhost:3001/api/v1` by default.
 | `DB_USER` | `postgres` | Database user |
 | `DB_PASSWORD` | (local password) | PostgreSQL password |
 | `HUB_API_KEY` | `dev-hub-key` | Required by the Library Game Hub to read results |
+| `JWT_SECRET` | (64 random characters) | Secret used to sign login tokens |
+| `JWT_EXPIRES_IN` | `1h` | Login token lifetime |
+| `CORS_ORIGINS` | `http://localhost:5173` | Comma-separated allowed browser origins |
 
 ## Database scripts
 
@@ -56,7 +59,9 @@ The API listens at `http://localhost:3001/api/v1` by default.
 
 ## Authentication and permissions
 
-Week 11 uses a temporary `X-Demo-User` header in place of real login. Use a seeded `school_id`:
+### Demo accounts
+
+The seeded accounts all use the demo password `Aklat-Demo-2026`.
 
 | Role | Demo user |
 |---|---|
@@ -65,7 +70,7 @@ Week 11 uses a temporary `X-Demo-User` header in place of real login. Use a seed
 | Admin | `24179001` |
 | Players | `24179723`, `24179795`, `24179111` |
 
-Send `X-Demo-User: 24179712` on protected requests. Known users with the wrong role receive `403`; missing or unknown users receive `401`. This header is not authentication and is only suitable for development. Replace the middleware before production.
+Log in with `POST /api/v1/auth/login` using a `school_id` and password. Send the returned token on protected requests as `Authorization: Bearer <token>`. Missing or invalid credentials receive `401`; an authenticated account without the required role receives `403`.
 
 Hosts can manage their own question sets and sessions. Admins can manage all question sets and sessions. Any known account can join a session; reading session details and player lists is public by join code.
 
@@ -78,6 +83,11 @@ Base URL: `http://localhost:3001/api/v1`
 | GET | `/health` | Public | 200 |
 | GET | `/game-info` | Public | 200 |
 | GET | `/results` | `X-Hub-Key` required | 200 |
+| POST | `/auth/register` | Public | 201 |
+| POST | `/auth/login` | Public | 200 |
+| GET | `/auth/me` | Any authenticated user | 200 |
+| GET | `/users` | Admin | 200 |
+| PATCH | `/users/:id/role` | Admin | 200 |
 | GET | `/game-session` | Public (legacy session listing) | 200 |
 | GET | `/question-sets` | Host or admin | 200 |
 | POST | `/question-sets` | Host or admin | 201 |
@@ -94,7 +104,7 @@ Base URL: `http://localhost:3001/api/v1`
 
 ```http
 POST /api/v1/question-sets
-X-Demo-User: 24179712
+Authorization: Bearer <hostToken>
 Content-Type: application/json
 ```
 
@@ -128,7 +138,7 @@ Create a session with an existing question set:
 
 ```http
 POST /api/v1/sessions
-X-Demo-User: 24179712
+Authorization: Bearer <hostToken>
 Content-Type: application/json
 ```
 
@@ -145,7 +155,7 @@ Join or rejoin:
 
 ```http
 POST /api/v1/sessions/123456/players
-X-Demo-User: 24179723
+Authorization: Bearer <playerToken>
 Content-Type: application/json
 ```
 

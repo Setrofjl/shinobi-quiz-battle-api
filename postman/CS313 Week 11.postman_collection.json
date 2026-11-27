@@ -1,27 +1,813 @@
 {
   "info": {
     "_postman_id": "85b66145-28e9-4bf1-9c44-64edfb5a4112",
-    "name": "CS 313 Week 11 - Shinobi Quiz Battle",
-    "description": "Week 11 CRUD, validation, sessions, player joins/rejoins, authorization, conflicts, and Hub results. Requests run in order; the manual capacity request requires a session pre-populated with 30 distinct players.",
+    "name": "CS 313 Week 12 - Shinobi Quiz Battle",
+    "description": "Log in folder runs first, followed by authentication and account checks, then the Week 11 API checks. All protected calls use JWT bearer tokens.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3001/api/v1" },
-    { "key": "hostSchoolId", "value": "24179712" },
-    { "key": "otherHostSchoolId", "value": "24179713" },
-    { "key": "adminSchoolId", "value": "24179001" },
-    { "key": "playerOneSchoolId", "value": "24179723" },
-    { "key": "playerTwoSchoolId", "value": "24179795" },
-    { "key": "hubKey", "value": "dev-hub-key" },
-    { "key": "setId", "value": "" },
-    { "key": "deleteSetId", "value": "" },
-    { "key": "sessionCode", "value": "" },
-    { "key": "secondSessionCode", "value": "" },
-    { "key": "playerId", "value": "" },
-    { "key": "playerScore", "value": "" },
-    { "key": "capacitySessionCode", "value": "123456" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3001/api/v1"
+    },
+    {
+      "key": "hostSchoolId",
+      "value": "24179712"
+    },
+    {
+      "key": "otherHostSchoolId",
+      "value": "24179713"
+    },
+    {
+      "key": "adminSchoolId",
+      "value": "24179001"
+    },
+    {
+      "key": "playerOneSchoolId",
+      "value": "24179723"
+    },
+    {
+      "key": "playerTwoSchoolId",
+      "value": "24179795"
+    },
+    {
+      "key": "hubKey",
+      "value": "dev-hub-key"
+    },
+    {
+      "key": "setId",
+      "value": ""
+    },
+    {
+      "key": "deleteSetId",
+      "value": ""
+    },
+    {
+      "key": "sessionCode",
+      "value": ""
+    },
+    {
+      "key": "secondSessionCode",
+      "value": ""
+    },
+    {
+      "key": "playerId",
+      "value": ""
+    },
+    {
+      "key": "playerScore",
+      "value": ""
+    },
+    {
+      "key": "capacitySessionCode",
+      "value": "123456"
+    },
+    {
+      "key": "playerThreeSchoolId",
+      "value": "24179111"
+    },
+    {
+      "key": "hostToken",
+      "value": ""
+    },
+    {
+      "key": "otherHostToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "playerToken",
+      "value": ""
+    },
+    {
+      "key": "playerTwoToken",
+      "value": ""
+    },
+    {
+      "key": "playerThreeToken",
+      "value": ""
+    },
+    {
+      "key": "newPlayerId",
+      "value": ""
+    },
+    {
+      "key": "tamperedToken",
+      "value": ""
+    },
+    {
+      "key": "invalidCredentialsBody",
+      "value": ""
+    },
+    {
+      "key": "capacitySessionReady",
+      "value": "false"
+    }
   ],
   "item": [
+    {
+      "name": "Log in (run this folder first)",
+      "item": [
+        {
+          "name": "Log in as host",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"{{hostSchoolId}}\",\n  \"password\": \"Aklat-Demo-2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const result = pm.response.json();",
+                  "pm.expect(result.token_type).to.eql('Bearer');",
+                  "pm.expect(result.token).to.be.a('string');",
+                  "pm.collectionVariables.set('hostToken', result.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as second host",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"{{otherHostSchoolId}}\",\n  \"password\": \"Aklat-Demo-2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const result = pm.response.json();",
+                  "pm.expect(result.token_type).to.eql('Bearer');",
+                  "pm.expect(result.token).to.be.a('string');",
+                  "pm.collectionVariables.set('otherHostToken', result.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"{{adminSchoolId}}\",\n  \"password\": \"Aklat-Demo-2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const result = pm.response.json();",
+                  "pm.expect(result.token_type).to.eql('Bearer');",
+                  "pm.expect(result.token).to.be.a('string');",
+                  "pm.collectionVariables.set('adminToken', result.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as player one",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"{{playerOneSchoolId}}\",\n  \"password\": \"Aklat-Demo-2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const result = pm.response.json();",
+                  "pm.expect(result.token_type).to.eql('Bearer');",
+                  "pm.expect(result.token).to.be.a('string');",
+                  "pm.collectionVariables.set('playerToken', result.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as player two",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"{{playerTwoSchoolId}}\",\n  \"password\": \"Aklat-Demo-2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const result = pm.response.json();",
+                  "pm.expect(result.token_type).to.eql('Bearer');",
+                  "pm.expect(result.token).to.be.a('string');",
+                  "pm.collectionVariables.set('playerTwoToken', result.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log in as player three",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"{{playerThreeSchoolId}}\",\n  \"password\": \"Aklat-Demo-2026\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login succeeds', function () { pm.response.to.have.status(200); });",
+                  "const result = pm.response.json();",
+                  "pm.expect(result.token_type).to.eql('Bearer');",
+                  "pm.expect(result.token).to.be.a('string');",
+                  "pm.collectionVariables.set('playerThreeToken', result.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Register returns 201",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"2488-0001\",\n  \"full_name\": \"Week Twelve Player\",\n  \"email\": \"week12.player@example.test\",\n  \"password\": \"StrongPass9\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('registration returns 201', function () { pm.response.to.have.status(201); });",
+                  "const user = pm.response.json().user;",
+                  "pm.expect(user.role).to.eql('PLAYER');",
+                  "pm.expect(user).not.to.have.property('password_hash');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Same school ID returns 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"2488-0001\",\n  \"full_name\": \"Duplicate School\",\n  \"email\": \"duplicate.school@example.test\",\n  \"password\": \"StrongPass9\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('duplicate school ID returns 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('SCHOOL_ID_TAKEN');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register role ADMIN is still PLAYER",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"2488-0002\",\n  \"full_name\": \"Role Check Player\",\n  \"email\": \"role.check@example.test\",\n  \"password\": \"StrongPass9\",\n  \"role\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('role spoofing registration returns 201 as PLAYER', function () { pm.response.to.have.status(201); });",
+                  "const user = pm.response.json().user;",
+                  "pm.expect(user.role).to.eql('PLAYER');",
+                  "pm.collectionVariables.set('newPlayerId', String(user.user_id));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Weak password returns 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"2488-0003\",\n  \"full_name\": \"Weak Password\",\n  \"email\": \"weak.password@example.test\",\n  \"password\": \"weak\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('weak password returns 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Wrong password returns 401",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"24179712\",\n  \"password\": \"WrongPass9\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('wrong password returns 401', function () { pm.response.to.have.status(401); });",
+                  "pm.collectionVariables.set('invalidCredentialsBody', JSON.stringify(pm.response.json()));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unknown school ID has same 401 body",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"99999999\",\n  \"password\": \"WrongPass9\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('unknown school ID returns the same 401 response', function () { pm.response.to.have.status(401); pm.expect(JSON.stringify(pm.response.json())).to.eql(pm.collectionVariables.get('invalidCredentialsBody')); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET auth me returns 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/auth/me returns the authenticated user', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().user).not.to.have.property('password_hash');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET auth me without token returns 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/auth/me without a token returns 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET auth me with tampered token returns 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{tamperedToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const parts = pm.collectionVariables.get('hostToken').split('.');",
+                  "parts[1] = (parts[1][0] === 'a' ? 'b' : 'a') + parts[1].slice(1);",
+                  "pm.request.headers.add({ key: 'Authorization', value: 'Bearer ' + parts.join('.') });",
+                  "pm.collectionVariables.set('tamperedToken', parts.join('.'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('/auth/me with a tampered token returns 401', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET auth me with X-Demo-User only returns 401",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Demo-User",
+                "value": "{{hostSchoolId}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('legacy demo-user header is not authentication', function () { pm.response.to.have.status(401); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Player lists accounts and gets 403",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('player cannot list accounts', function () { pm.response.to.have.status(403); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin lists accounts and gets 200",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin can list accounts', function () { pm.response.to.have.status(200); });",
+                  "pm.expect(pm.response.json().users).to.be.an('array');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin promotes a user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{newPlayerId}}/role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"HOST\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin promotes a player', function () { pm.response.to.have.status(200); pm.expect(pm.response.json().user.role).to.eql('HOST'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin cannot change their own role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/users/6/role",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"PLAYER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('admin changing own role returns 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('CANNOT_CHANGE_OWN_ROLE');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Duplicate email returns 409",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"2488-0004\",\n  \"full_name\": \"Duplicate Email\",\n  \"email\": \"minato@example.test\",\n  \"password\": \"StrongPass9\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('duplicate email returns 409', function () { pm.response.to.have.status(409); });",
+                  "pm.expect(pm.response.json().error.code).to.eql('EMAIL_TAKEN');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "Hub Contract",
       "item": [
@@ -74,13 +860,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"Week 11 Shinobi Basics\",\n  \"subject\": \"General Knowledge\",\n  \"hostId\": 999\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/question-sets"
           },
@@ -105,7 +901,12 @@
           "name": "List question sets - 200",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/question-sets"
           },
           "event": [
@@ -125,7 +926,12 @@
           "name": "Read created question set - 200",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/question-sets/{{setId}}"
           },
           "event": [
@@ -146,13 +952,23 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"title\": \"Week 11 Shinobi Review\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/question-sets/{{setId}}"
           },
@@ -174,13 +990,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"title\":\"ab\",\"subject\":\"Review\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/question-sets"
           },
@@ -203,13 +1029,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"title\":\"broken\"",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/question-sets"
           },
@@ -250,7 +1086,12 @@
           "name": "Player cannot manage question sets - 403",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/question-sets"
           },
           "event": [
@@ -270,13 +1111,23 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "X-Demo-User", "value": "{{otherHostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{otherHostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"title\":\"Unauthorized edit\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/question-sets/{{setId}}"
           },
@@ -296,7 +1147,12 @@
           "name": "Missing question set - 404",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/question-sets/2147483647"
           },
           "event": [
@@ -322,13 +1178,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"questionSetId\": {{setId}},\n  \"timeLimit\": 600\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions"
           },
@@ -353,13 +1219,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"questionSetId\": {{setId}},\n  \"timeLimit\": 600\n}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions"
           },
@@ -403,13 +1279,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"nickname\":\"Week11 Player\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
           },
@@ -434,13 +1320,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{playerTwoSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerTwoToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"nickname\":\"Week11 Player\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
           },
@@ -462,13 +1358,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"nickname\":\"Ignored on rejoin\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
           },
@@ -513,13 +1419,23 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"status\":\"RUNNING\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}"
           },
@@ -541,13 +1457,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\"nickname\":\"Ignored on running rejoin\"}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\"nickname\":\"Returning player\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
           },
@@ -571,13 +1497,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{playerTwoSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerTwoToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"nickname\":\"New Player\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
           },
@@ -599,13 +1535,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"nickname\":\"Second Game\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{secondSessionCode}}/players"
           },
@@ -627,13 +1573,23 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "X-Demo-User", "value": "{{otherHostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{otherHostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"status\":\"CLOSED\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}"
           },
@@ -654,13 +1610,23 @@
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"status\":\"CLOSED\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}"
           },
@@ -683,13 +1649,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{playerTwoSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerTwoToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"nickname\":\"Closed Session\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{sessionCode}}/players"
           },
@@ -710,7 +1686,12 @@
           "name": "Closed session appears in Hub results",
           "request": {
             "method": "GET",
-            "header": [{ "key": "X-Hub-Key", "value": "{{hubKey}}" }],
+            "header": [
+              {
+                "key": "X-Hub-Key",
+                "value": "{{hubKey}}"
+              }
+            ],
             "url": "{{baseUrl}}/results"
           },
           "event": [
@@ -736,7 +1717,12 @@
           "name": "Cannot delete question set used by a session - 409",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/question-sets/{{setId}}"
           },
           "event": [
@@ -757,13 +1743,23 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{hostSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"title\":\"Disposable Set\",\"subject\":\"Cleanup\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/question-sets"
           },
@@ -784,7 +1780,12 @@
           "name": "Delete unused question set - 204",
           "request": {
             "method": "DELETE",
-            "header": [{ "key": "X-Demo-User", "value": "{{hostSchoolId}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{hostToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/question-sets/{{deleteSetId}}"
           },
           "event": [
@@ -809,17 +1810,36 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "X-Demo-User", "value": "{{playerOneSchoolId}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{playerToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
               "raw": "{\"nickname\":\"Overflow Player\"}",
-              "options": { "raw": { "language": "json" } }
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
             },
             "url": "{{baseUrl}}/sessions/{{capacitySessionCode}}/players"
           },
           "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.collectionVariables.get('capacitySessionReady') !== 'true') pm.execution.skipRequest();"
+                ]
+              }
+            },
             {
               "listen": "test",
               "script": {
@@ -831,7 +1851,8 @@
               }
             }
           ],
-          "disabled": true
+          "disabled": true,
+          "description": "Manual precondition: set up a full session, set capacitySessionCode to its join code, then set capacitySessionReady to true."
         }
       ]
     }
