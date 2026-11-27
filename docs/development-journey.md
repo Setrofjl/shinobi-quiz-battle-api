@@ -1,19 +1,19 @@
-# Development journey: [your game title] API
+# Development journey: [SHINOBI-QUIZ-BATTLE] API
 
-Student: [your name] · Section: [3-1 or 3-2] · Group: [group name]
+Student: [Gipanao John Lawrenze Fortes] · Section: [BSCS-3-1] · Group: [group-3]
 
 One entry per milestone, written the week you did it. Newest at the bottom.
 
 ## M1 · Accounts, passwords and tokens
-- Dates worked: [e.g. Nov 4 to Nov 7, 2026] · Time spent: [hours]
-- Goal: [one sentence]
-- What I built: [files and endpoints]
-- Evidence: [pull request link] · [two or three commit hashes]
-- Problem I hit: [the error or wrong behaviour]
-- How I solved it: [what you tried, what worked, where you found the answer]
-- Decision I made and why: [a rule, a limit or a name, and its cost]
-- Changes to my design set: [ERD, data dictionary or endpoint table changes, or "none"]
-- What I would explain to a classmate: [one idea, in your own words]
+- Dates worked: Nov 27, 2026 · Time spent: 5 hours
+- Goal: Add password registration/login, JWT authentication and admin-only account management.
+- What I built: `/auth/register`, `/auth/login`, `/auth/me`, `/users`, and `/users/:id/role`, plus the password migration and demo-password seeder.
+- Evidence: 5 focused auth API tests passed; Postman collection has 52 requests and passed the Week 12 check.
+- Problem I hit: The existing auth helpers expected JWT/bcrypt config exports, and the User model expected timestamp columns that the migration did not create.
+- How I solved it: Exported the existing JWT settings and cost 10, disabled nonexistent User timestamps, and normalized seeded role casing when authenticating.
+- Decision I made and why: Store bcrypt hashes only, use a dummy hash for unknown IDs, and make registration always create PLAYER accounts; this avoids password leaks, account enumeration and self-assigned privileges.
+- Changes to my design set: Added nullable `password_hash` to users and documented the account endpoints; no relationship changes.
+- What I would explain to a classmate: 401 means the request is unauthenticated; 403 means the authenticated account lacks permission.
 
 ## M2 · The question bank
 

@@ -13,9 +13,7 @@ module.exports = (sequelize, DataTypes) =>
     },
     {
       tableName: 'users',
-      timestamps: true,
-      createdAt: 'created_at',
-      updatedAt: false,
+      timestamps: false,
       // Week 12: the hash never leaves the database by accident.
       // Only the login query asks for it, with User.scope('withPassword').
       defaultScope: { attributes: { exclude: ['password_hash'] } },

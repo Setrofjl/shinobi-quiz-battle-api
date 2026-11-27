@@ -35,7 +35,11 @@ async function currentUser(req, res, next) {
   if (!account) throw unauthorized('This account no longer exists.', 'INVALID_TOKEN');
 
   req.account = account;                 // the full account, for GET /auth/me
-  req.user = { user_id: account.user_id, school_id: account.school_id, role: account.role };
+  req.user = {
+    user_id: account.user_id,
+    school_id: account.school_id,
+    role: account.role.toUpperCase(),
+  };
   return next();
 }
 
